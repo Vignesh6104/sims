@@ -1,0 +1,81 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden; /* Prevent horizontal scroll */
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  
+  /* Minimal Light Gradient Background */
+  background: linear-gradient(to right top, #e0eafc, #cfdef3, #e0eafc); /* Light, subtle blue/grey gradient */
+  background-size: cover;
+  height: 100vh;
+  overflow-y: auto;
+  backdrop-filter: blur(8px); /* Apply blur to the background */
+  -webkit-backdrop-filter: blur(8px); /* For Safari */
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Base Glassmorphism effect for elements like Paper, Card */
+.MuiPaper-root, .MuiCard-root {
+  background-color: rgba(255, 255, 255, 0.6) !important; /* More transparent white for light theme */
+  backdrop-filter: blur(15px) !important; /* Clearer blur */
+  -webkit-backdrop-filter: blur(15px) !important; /* For Safari */
+  border: 1px solid rgba(255, 255, 255, 0.8) !important; /* More prominent border */
+  border-right-color: rgba(255, 255, 255, 0.7) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.7) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15) !important; /* Subtle shadow */
+  transition: all 0.3s ease-in-out;
+}
+
+/* Adjustments for inputs */
+.MuiInputBase-root {
+  background-color: rgba(255, 255, 255, 0.8) !important; /* Slightly transparent white */
+  border-radius: 8px !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important; /* Soft dark border */
+}
+
+/* Text color for better readability on blurred background */
+.MuiTypography-root, .MuiInputLabel-root, .MuiInputBase-input, .MuiSvgIcon-root {
+  color: #333333 !important; /* Dark grey for text and icons */
+}
+
+.MuiInputLabel-root.Mui-focused {
+  color: #000000 !important; /* Black for focused label */
+}
+
+.MuiOutlinedInput-notchedOutline {
+  border-color: transparent !important; /* Border handled by root */
+}
+
+.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: transparent !important;
+}
+
+.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: transparent !important;
+}
+
+/* Buttons */
+.MuiButton-containedPrimary {
+  background-color: rgba(25, 118, 210, 0.7) !important; /* Primary blue with transparency */
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+.MuiButton-containedPrimary:hover {
+  background-color: rgba(25, 118, 210, 0.9) !important;
+  box-shadow: none !important;
+}
+
+

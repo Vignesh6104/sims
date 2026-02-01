@@ -1,0 +1,24 @@
+from pydantic import BaseModel, EmailStr
+from typing import Optional
+
+class AdminBase(BaseModel):
+    email: EmailStr
+    full_name: Optional[str] = None
+    department: Optional[str] = None
+    position: Optional[str] = None
+    is_active: Optional[bool] = True
+
+class AdminCreate(AdminBase):
+    password: str
+
+class AdminUpdate(AdminBase):
+    password: Optional[str] = None
+
+class AdminInDBBase(AdminBase):
+    id: str
+
+    class Config:
+        from_attributes = True
+
+class Admin(AdminInDBBase):
+    pass
