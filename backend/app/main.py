@@ -1,18 +1,18 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-import os
+# from fastapi.staticfiles import StaticFiles # No longer needed
+import os # Only needed if other os ops are there, but not for uploads
 from app.core.config import settings
 from app.api.v1 import admins, auth, students, teachers, attendance, marks, class_rooms, dashboard, subjects, exams, fees, timetable, assignments, notifications
 
 app = FastAPI(title=settings.PROJECT_NAME, openapi_url=f"{settings.API_V1_STR}/openapi.json")
 
-# Ensure uploads directory exists
-if not os.path.exists("uploads"):
-    os.makedirs("uploads")
+# Ensure uploads directory exists # No longer needed, using Cloudinary
+# if not os.path.exists("uploads"):
+#     os.makedirs("uploads")
 
-# Serve uploads statically
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+# Serve uploads statically # No longer needed, using Cloudinary
+# app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # Set all CORS enabled origins
 app.add_middleware(

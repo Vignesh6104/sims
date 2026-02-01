@@ -8,12 +8,19 @@ from datetime import date
 from app.api import deps
 from app.crud import crud_assignment
 from app.schemas.assignment import Assignment, AssignmentCreate, Submission, SubmissionCreate, SubmissionUpdate
+import cloudinary
+import cloudinary.uploader
+from app.core.config import settings
+import tempfile # Import tempfile
 
 router = APIRouter()
 
-UPLOAD_DIR = "uploads/assignments"
-if not os.path.exists(UPLOAD_DIR):
-    os.makedirs(UPLOAD_DIR)
+# Initialize Cloudinary
+cloudinary.config(
+    cloud_name=settings.CLOUDINARY_CLOUD_NAME,
+    api_key=settings.CLOUDINARY_API_KEY,
+    api_secret=settings.CLOUDINARY_API_SECRET
+)
 
 @router.get("/class/{class_id}", response_model=List[Assignment])
 def read_class_assignments(
@@ -54,25 +61,36 @@ async def submit_assignment(
     if existing and existing.grade is not None:
         raise HTTPException(status_code=400, detail="Assignment already graded and cannot be edited")
     
-    # Save file
-    file_ext = os.path.splitext(file.filename)[1]
-    file_name = f"{uuid.uuid4()}{file_ext}"
-    file_path = os.path.join(UPLOAD_DIR, file_name)
-    
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-    
-    content_path = f"/uploads/assignments/{file_name}"
+    # Upload file to Cloudinary
+    temp_file_path = None
+    try:
+        # Create a named temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as temp_file:
+            shutil.copyfileobj(file.file, temp_file)
+            temp_file_path = temp_file.name # Get the path of the temporary file
+            
+        upload_result = cloudinary.uploader.upload(
+            temp_file_path, 
+            folder="sims_assignments", # Optional: organize uploads in a folder
+            resource_type="auto" # Auto-detect type (image, video, raw)
+        )
+        file_url = upload_result.get("secure_url")
+        if not file_url:
+            raise HTTPException(status_code=500, detail="Cloudinary upload failed: No secure_url returned")
+            
+    except cloudinary.exceptions.Error as e:
+        raise HTTPException(status_code=500, detail=f"Cloudinary upload error: {e}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"File upload processing failed: {e}")
+    finally:
+        if temp_file_path and os.path.exists(temp_file_path):
+            os.remove(temp_file_path) # Clean up the temporary file
 
     if existing:
         # Update existing submission
-        # Delete old file if possible (optional but good practice)
-        old_file_path = existing.content.lstrip('/')
-        if os.path.exists(old_file_path):
-            try: os.remove(old_file_path)
-            except: pass
-            
-        existing.content = content_path
+        # Optionally, delete old file from Cloudinary here if needed, requires public_id
+        
+        existing.content = file_url
         existing.submission_date = date.today()
         db.add(existing)
         db.commit()
@@ -83,7 +101,7 @@ async def submit_assignment(
     submission_in = SubmissionCreate(
         assignment_id=assignment_id,
         student_id=current_user.id,
-        content=content_path,
+        content=file_url,
         submission_date=date.today()
     )
     

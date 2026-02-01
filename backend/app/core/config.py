@@ -15,6 +15,11 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int
     BCRYPT_ROUNDS: int = 12 # Default bcrypt rounds
 
+    # Cloudinary Settings
+    CLOUDINARY_CLOUD_NAME: str
+    CLOUDINARY_API_KEY: str
+    CLOUDINARY_API_SECRET: str
+
     class Config:
         case_sensitive = True
         env_file = ".env"
