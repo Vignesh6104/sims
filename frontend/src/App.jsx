@@ -10,6 +10,7 @@ import PublicLayout from './components/PublicLayout';
 import AdminDashboard from './pages/AdminDashboard';
 import Teachers from './pages/admin/Teachers';
 import Students from './pages/admin/Students';
+import Admins from './pages/admin/Admins';
 import Classes from './pages/admin/Classes';
 import Subjects from './pages/admin/Subjects';
 import Exams from './pages/admin/Exams';
@@ -25,6 +26,10 @@ import StudentAttendance from './pages/student/Attendance';
 import StudentMarks from './pages/student/Marks';
 import StudentAssignments from './pages/student/Assignments';
 import NotFound from './pages/NotFound';
+import Calendar from './pages/Calendar';
+import Library from './pages/admin/Library';
+import LibraryCatalog from './pages/LibraryCatalog';
+import ParentDashboard from './pages/ParentDashboard';
 
 // Placeholders for now, will implement later
 const Placeholder = ({ title }) => <h2>{title} Page (Coming Soon)</h2>;
@@ -46,6 +51,7 @@ function App() {
       <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
         <Route path="/admin" element={<Layout />}>
           <Route index element={<AdminDashboard />} />
+          <Route path="admins" element={<Admins />} />
           <Route path="teachers" element={<Teachers />} />
           <Route path="students" element={<Students />} />
           <Route path="classes" element={<Classes />} />
@@ -54,6 +60,8 @@ function App() {
           <Route path="fees" element={<AdminFees />} />
           <Route path="timetable" element={<AdminTimetable />} />
           <Route path="notifications" element={<Notifications />} />
+          <Route path="calendar" element={<Calendar />} />
+          <Route path="library" element={<Library />} />
         </Route>
       </Route>
 
@@ -65,6 +73,8 @@ function App() {
           <Route path="marks" element={<TeacherMarks />} />
           <Route path="assignments" element={<TeacherAssignments />} />
           <Route path="notifications" element={<Notifications />} />
+          <Route path="calendar" element={<Calendar />} />
+          <Route path="library" element={<LibraryCatalog />} />
         </Route>
       </Route>
 
@@ -76,6 +86,17 @@ function App() {
           <Route path="marks" element={<StudentMarks />} />
           <Route path="assignments" element={<StudentAssignments />} />
           <Route path="notifications" element={<Notifications />} />
+          <Route path="calendar" element={<Calendar />} />
+          <Route path="library" element={<LibraryCatalog />} />
+        </Route>
+      </Route>
+
+      {/* Parent Routes */}
+      <Route element={<ProtectedRoute allowedRoles={['parent']} />}>
+        <Route path="/parent" element={<Layout />}>
+          <Route index element={<ParentDashboard />} />
+          <Route path="notifications" element={<Notifications />} />
+          <Route path="calendar" element={<Calendar />} />
         </Route>
       </Route>
 

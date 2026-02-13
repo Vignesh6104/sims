@@ -35,7 +35,7 @@ const Notifications = () => {
 
     const fetchNotifications = async () => {
         try {
-            const res = await api.get('/notifications');
+            const res = await api.get('/notifications/');
             setNotifications(res.data);
         } catch (error) {
             console.error("Failed to fetch notifications");
@@ -50,7 +50,7 @@ const Notifications = () => {
         try {
             const data = { ...form };
             if (!data.recipient_id) data.recipient_id = null;
-            await api.post('/notifications', data);
+            await api.post('/notifications/', data);
             enqueueSnackbar('Notification sent successfully', { variant: 'success' });
             setForm({ title: '', message: '', recipient_role: 'all', recipient_id: '' });
             fetchNotifications();
@@ -61,7 +61,7 @@ const Notifications = () => {
 
     const handleMarkRead = async (id) => {
         try {
-            await api.put(`/notifications/${id}/read`);
+            await api.put(`/notifications/${id}/read/`);
             fetchNotifications();
         } catch (error) {
             enqueueSnackbar('Failed to mark as read', { variant: 'error' });

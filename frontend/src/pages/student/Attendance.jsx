@@ -29,7 +29,7 @@ const Attendance = () => {
     useEffect(() => {
         const fetchAttendance = async () => {
             try {
-                const response = await api.get(`/attendance?student_id=${user.sub}`);
+                const response = await api.get(`/attendance/?student_id=${user.sub}`);
                 setAttendance(response.data);
                 
                 const total = response.data.length;

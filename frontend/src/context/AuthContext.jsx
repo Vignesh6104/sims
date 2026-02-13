@@ -60,6 +60,7 @@ export const AuthProvider = ({ children }) => {
             if (decoded.role === 'admin') navigate('/admin');
             else if (decoded.role === 'teacher') navigate('/teacher');
             else if (decoded.role === 'student') navigate('/student');
+            else if (decoded.role === 'parent') navigate('/parent');
             
             return true;
         } catch (error) {

@@ -64,7 +64,7 @@ const Login = () => {
                     left: 0,
                     width: '100%',
                     height: '100%',
-                    backgroundColor: 'rgba(0,0,0,0.5)', // Overlay
+                    backgroundColor: 'rgba(25, 118, 210, 0.8)', // Primary blue overlay
                 }} />
                 <Box sx={{ position: 'relative', zIndex: 1, textAlign: 'center', color: 'white', p: 4 }}>
                     <motion.div

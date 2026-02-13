@@ -97,7 +97,7 @@ const TeacherDashboardContent = () => {
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
-                const response = await api.get('/dashboard/teacher/stats');
+                const response = await api.get('/dashboard/teacher/stats/');
                 setData(response.data);
             } catch (error) {
                 console.error("Failed to fetch dashboard data", error);

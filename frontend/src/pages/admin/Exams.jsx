@@ -32,7 +32,7 @@ const Exams = () => {
     const fetchExams = async () => {
         setLoading(true);
         try {
-            const response = await api.get('/exams');
+            const response = await api.get('/exams/');
             setExams(response.data);
         } catch (error) {
             enqueueSnackbar('Failed to fetch exams', { variant: 'error' });
@@ -64,7 +64,7 @@ const Exams = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this exam?')) {
             try {
-                await api.delete(`/exams/${id}`);
+                await api.delete(`/exams/${id}/`);
                 enqueueSnackbar('Exam deleted successfully', { variant: 'success' });
                 fetchExams();
             } catch (error) {
@@ -82,10 +82,10 @@ const Exams = () => {
     const handleSubmit = async () => {
         try {
             if (editMode) {
-                await api.put(`/exams/${selectedId}`, formData);
+                await api.put(`/exams/${selectedId}/`, formData);
                 enqueueSnackbar('Exam updated successfully', { variant: 'success' });
             } else {
-                await api.post('/exams', formData);
+                await api.post('/exams/', formData);
                 enqueueSnackbar('Exam added successfully', { variant: 'success' });
             }
             fetchExams();
@@ -102,8 +102,10 @@ const Exams = () => {
             field: 'actions',
             headerName: 'Actions',
             width: 150,
+            sortable: false,
+            filterable: false,
             renderCell: (params) => (
-                <Box>
+                <Box onClick={(e) => e.stopPropagation()}>
                     <Tooltip title="Edit">
                         <IconButton size="small" color="primary" onClick={() => handleEdit(params.row)}>
                             <EditIcon />
@@ -145,10 +147,14 @@ const Exams = () => {
                 <DataGrid
                     rows={exams}
                     columns={columns}
-                    pageSize={10}
-                    rowsPerPageOptions={[10]}
+                    initialState={{
+                        pagination: {
+                            paginationModel: { pageSize: 10 },
+                        },
+                    }}
+                    pageSizeOptions={[10]}
                     checkboxSelection
-                    disableSelectionOnClick
+                    disableRowSelectionOnClick
                     loading={loading}
                 />
             </Paper>

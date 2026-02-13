@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Grid, Paper, Typography, Box, CircularProgress, List, ListItem, ListItemText, ListItemAvatar, Avatar } from '@mui/material';
 import api from '../api/axios';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { School, People, Class, EventNote, PersonAdd } from '@mui/icons-material';
 
 const StatCard = ({ title, value, icon, color }) => (
@@ -62,7 +62,7 @@ const AdminDashboard = () => {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const response = await api.get('/dashboard/stats');
+                const response = await api.get('/dashboard/stats/');
                 setStats(response.data);
             } catch (error) {
                 console.error("Failed to fetch dashboard stats", error);
@@ -79,6 +79,12 @@ const AdminDashboard = () => {
             <CircularProgress />
         </Box>
     );
+
+    const pieData = [
+        { name: 'Students', value: stats?.total_students || 0 },
+        { name: 'Teachers', value: stats?.total_teachers || 0 },
+    ];
+    const COLORS = ['#0088FE', '#00C49F'];
 
     return (
         <Box>
@@ -123,44 +129,72 @@ const AdminDashboard = () => {
 
             <Grid container spacing={3}>
                 <Grid item xs={12} md={8}>
-                    <Paper sx={{ p: 3, height: 400 }}>
+                    <Paper sx={{ p: 3, height: 400, display: 'flex', flexDirection: 'column' }}>
                         <Typography variant="h6" sx={{ mb: 2 }}>Attendance Trends (This Year)</Typography>
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={stats?.chart_data || []} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="name" interval={0} angle={-30} textAnchor="end" height={60} />
-                                <YAxis />
-                                <ChartTooltip />
-                                <Legend verticalAlign="top" height={36}/>
-                                <Bar dataKey="students" name="Total Students" fill="#8884d8" />
-                                <Bar dataKey="attendance" name="Attendance Count" fill="#82ca9d" />
-                            </BarChart>
-                        </ResponsiveContainer>
+                        <Box sx={{ flexGrow: 1, width: '100%', minHeight: 0 }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={stats?.chart_data || []} margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis dataKey="name" interval={0} angle={-30} textAnchor="end" height={60} />
+                                    <YAxis />
+                                    <ChartTooltip />
+                                    <Legend verticalAlign="top" height={36}/>
+                                    <Bar dataKey="students" name="Total Students" fill="#8884d8" />
+                                    <Bar dataKey="attendance" name="Attendance Count" fill="#82ca9d" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </Box>
                     </Paper>
                 </Grid>
                 <Grid item xs={12} md={4}>
-                    <Paper sx={{ p: 3, height: 400, overflow: 'auto' }}>
-                        <Typography variant="h6" sx={{ mb: 2 }}>Recent Activities</Typography>
-                        <List>
-                            {stats?.recent_activities?.length > 0 ? (
-                                stats.recent_activities.map((activity, index) => (
-                                    <ListItem key={index}>
-                                        <ListItemAvatar>
-                                            <Avatar sx={{ bgcolor: activity.type === 'teacher' ? 'secondary.main' : 'primary.main' }}>
-                                                <PersonAdd />
-                                            </Avatar>
-                                        </ListItemAvatar>
-                                        <ListItemText 
-                                            primary={activity.text} 
-                                            secondary={activity.time} 
-                                        />
-                                    </ListItem>
-                                ))
-                            ) : (
-                                <Typography color="text.secondary">No recent activities.</Typography>
-                            )}
-                        </List>
-                    </Paper>
+                     <Grid container spacing={3} direction="column">
+                        <Grid item xs={12}>
+                            <Paper sx={{ p: 3, height: 300, display: 'flex', flexDirection: 'column' }}>
+                                <Typography variant="h6" sx={{ mb: 2 }}>User Distribution</Typography>
+                                <Box sx={{ flexGrow: 1, width: '100%', minHeight: 0 }}>
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <Pie
+                                                data={pieData}
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={45}
+                                                outerRadius={60}
+                                                fill="#8884d8"
+                                                paddingAngle={5}
+                                                dataKey="value"
+                                            >
+                                                {pieData.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                ))}
+                                            </Pie>
+                                            <ChartTooltip />
+                                            <Legend verticalAlign="bottom" height={36}/>
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                </Box>
+                            </Paper>
+                        </Grid>
+                        <Grid item xs={12}>
+                             <Paper sx={{ p: 3, height: 125, overflow: 'auto' }}>
+                                <Typography variant="h6" sx={{ mb: 1 }}>Recent Activities</Typography>
+                                <List dense>
+                                    {stats?.recent_activities?.length > 0 ? (
+                                        stats.recent_activities.map((activity, index) => (
+                                            <ListItem key={index} disablePadding>
+                                                <ListItemText 
+                                                    primary={activity.text} 
+                                                    secondary={activity.time} 
+                                                />
+                                            </ListItem>
+                                        ))
+                                    ) : (
+                                        <Typography color="text.secondary" variant="body2">No recent activities.</Typography>
+                                    )}
+                                </List>
+                            </Paper>
+                        </Grid>
+                     </Grid>
                 </Grid>
             </Grid>
         </Box>

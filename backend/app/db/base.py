@@ -13,3 +13,6 @@ from app.models.fee import FeeStructure, FeePayment
 from app.models.timetable import Timetable
 from app.models.assignment import Assignment, Submission
 from app.models.notification import Notification
+from app.models.event import Event
+from app.models.library import Book, BorrowRecord
+from app.models.parent import Parent

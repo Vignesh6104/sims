@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     Box,
     Button,
@@ -17,7 +17,7 @@ import {
     InputLabel
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-import { Add as AddIcon, Refresh as RefreshIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { Add as AddIcon, Refresh as RefreshIcon, Edit as EditIcon, Delete as DeleteIcon, CloudUpload as CloudUploadIcon } from '@mui/icons-material';
 import api from '../../api/axios';
 import { useSnackbar } from 'notistack';
 
@@ -38,11 +38,12 @@ const Students = () => {
         class_id: ''
     });
     const { enqueueSnackbar } = useSnackbar();
+    const fileInputRef = useRef(null);
 
     const fetchStudents = async () => {
         setLoading(true);
         try {
-            const response = await api.get('/students');
+            const response = await api.get('/students/');
             setStudents(response.data);
         } catch (error) {
             enqueueSnackbar('Failed to fetch students', { variant: 'error' });
@@ -53,7 +54,7 @@ const Students = () => {
 
     const fetchClasses = async () => {
         try {
-            const response = await api.get('/class_rooms');
+            const response = await api.get('/class_rooms/');
             setClasses(response.data);
         } catch (error) {
             console.error('Failed to fetch classes');
@@ -97,12 +98,46 @@ const Students = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this student?')) {
             try {
-                await api.delete(`/students/${id}`);
+                await api.delete(`/students/${id}/`);
                 enqueueSnackbar('Student deleted successfully', { variant: 'success' });
                 fetchStudents();
             } catch (error) {
                 enqueueSnackbar('Failed to delete student', { variant: 'error' });
             }
+        }
+    };
+
+    const handleImportClick = () => {
+        fileInputRef.current.click();
+    };
+
+    const handleFileChange = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            setLoading(true);
+            const response = await api.post('/students/upload/', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+            
+            enqueueSnackbar(response.data.message, { variant: 'success' });
+            if (response.data.errors && response.data.errors.length > 0) {
+                response.data.errors.forEach(err => {
+                    enqueueSnackbar(err, { variant: 'warning' });
+                });
+            }
+            fetchStudents();
+        } catch (error) {
+            enqueueSnackbar(error.response?.data?.detail || 'Import failed', { variant: 'error' });
+        } finally {
+            setLoading(false);
+            event.target.value = null; // Reset input
         }
     };
 
@@ -120,7 +155,7 @@ const Students = () => {
             
             if (editMode) {
                 if (!payload.password) delete payload.password;
-                await api.put(`/students/${selectedId}`, payload);
+                await api.put(`/students/${selectedId}/`, payload);
                 enqueueSnackbar('Student updated successfully', { variant: 'success' });
             } else {
                 await api.post('/auth/register/student', payload);
@@ -151,8 +186,10 @@ const Students = () => {
             field: 'actions',
             headerName: 'Actions',
             width: 150,
+            sortable: false,
+            filterable: false,
             renderCell: (params) => (
-                <Box>
+                <Box onClick={(e) => e.stopPropagation()}>
                     <Tooltip title="Edit">
                         <IconButton size="small" color="primary" onClick={() => handleEdit(params.row)}>
                             <EditIcon />
@@ -173,6 +210,21 @@ const Students = () => {
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                 <Typography variant="h5" fontWeight="bold">Students Management</Typography>
                 <Box>
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        style={{ display: 'none' }}
+                        onChange={handleFileChange}
+                        accept=".csv"
+                    />
+                    <Button 
+                        startIcon={<CloudUploadIcon />} 
+                        onClick={handleImportClick} 
+                        sx={{ mr: 1 }}
+                        variant="outlined"
+                    >
+                        Import CSV
+                    </Button>
                     <Button 
                         startIcon={<RefreshIcon />} 
                         onClick={fetchStudents} 
@@ -194,15 +246,24 @@ const Students = () => {
                 <DataGrid
                     rows={students}
                     columns={columns}
-                    pageSize={10}
-                    rowsPerPageOptions={[10]}
+                    initialState={{
+                        pagination: {
+                            paginationModel: { pageSize: 10 },
+                        },
+                    }}
+                    pageSizeOptions={[10]}
                     checkboxSelection
-                    disableSelectionOnClick
+                    disableRowSelectionOnClick
                     loading={loading}
                 />
             </Paper>
 
-            <Dialog open={open} onClose={handleClose}>
+            <Dialog 
+                open={open} 
+                onClose={handleClose}
+                disableEnforceFocus
+                disableAutoFocus
+            >
                 <DialogTitle>{editMode ? 'Edit Student' : 'Add New Student'}</DialogTitle>
                 <DialogContent>
                     <TextField

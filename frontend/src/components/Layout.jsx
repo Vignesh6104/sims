@@ -26,6 +26,7 @@ import {
     Menu as MenuIcon,
     Dashboard as DashboardIcon,
     People as PeopleIcon,
+    Group as GroupIcon,
     School as SchoolIcon,
     Class as ClassIcon,
     Book as BookIcon,
@@ -33,7 +34,9 @@ import {
     Logout as LogoutIcon,
     EventNote as EventNoteIcon,
     BarChart as BarChartIcon,
-    Notifications as NotificationsIcon
+    Notifications as NotificationsIcon,
+    CalendarMonth as CalendarIcon,
+    LocalLibrary as LibraryIcon
 } from '@mui/icons-material';
 
 const drawerWidth = 240;
@@ -72,12 +75,15 @@ const Layout = () => {
     const menuItems = {
         admin: [
             { text: 'Dashboard', icon: <DashboardIcon />, path: '/admin' },
+            { text: 'Admins', icon: <GroupIcon />, path: '/admin/admins' },
             { text: 'Teachers', icon: <PeopleIcon />, path: '/admin/teachers' },
             { text: 'Students', icon: <SchoolIcon />, path: '/admin/students' },
             { text: 'Classes', icon: <ClassIcon />, path: '/admin/classes' },
             { text: 'Subjects', icon: <BookIcon />, path: '/admin/subjects' },
             { text: 'Exams', icon: <AssignmentIcon />, path: '/admin/exams' },
             { text: 'Timetable', icon: <EventNoteIcon />, path: '/admin/timetable' },
+            { text: 'Calendar', icon: <CalendarIcon />, path: '/admin/calendar' },
+            { text: 'Library', icon: <LibraryIcon />, path: '/admin/library' },
             { text: 'Fees', icon: <BarChartIcon />, path: '/admin/fees' },
             { text: 'Notifications', icon: <NotificationsIcon />, path: '/admin/notifications' },
         ],
@@ -86,6 +92,8 @@ const Layout = () => {
             { text: 'Attendance', icon: <EventNoteIcon />, path: '/teacher/attendance' },
             { text: 'Marks', icon: <BarChartIcon />, path: '/teacher/marks' },
             { text: 'Assignments', icon: <AssignmentIcon />, path: '/teacher/assignments' },
+            { text: 'Calendar', icon: <CalendarIcon />, path: '/teacher/calendar' },
+            { text: 'Library', icon: <LibraryIcon />, path: '/teacher/library' },
             { text: 'Notifications', icon: <NotificationsIcon />, path: '/teacher/notifications' },
         ],
         student: [
@@ -93,7 +101,14 @@ const Layout = () => {
             { text: 'Attendance', icon: <EventNoteIcon />, path: '/student/attendance' },
             { text: 'Marks', icon: <BarChartIcon />, path: '/student/marks' },
             { text: 'Assignments', icon: <AssignmentIcon />, path: '/student/assignments' },
+            { text: 'Calendar', icon: <CalendarIcon />, path: '/student/calendar' },
+            { text: 'Library', icon: <LibraryIcon />, path: '/student/library' },
             { text: 'Notifications', icon: <NotificationsIcon />, path: '/student/notifications' },
+        ],
+        parent: [
+            { text: 'Dashboard', icon: <DashboardIcon />, path: '/parent' },
+            { text: 'Calendar', icon: <CalendarIcon />, path: '/parent/calendar' },
+            { text: 'Notifications', icon: <NotificationsIcon />, path: '/parent/notifications' },
         ],
     };
 
@@ -250,6 +265,8 @@ const Layout = () => {
                         onClose={handleDrawerToggle}
                         ModalProps={{
                             keepMounted: true, // Better open performance on mobile.
+                            disableEnforceFocus: true,
+                            disableAutoFocus: true
                         }}
                         sx={{
                             display: { xs: 'block', sm: 'none' },

@@ -12,3 +12,4 @@ httpx
 pytest
 pydantic[email]
 cloudinary
+reportlab

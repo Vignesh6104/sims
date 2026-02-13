@@ -46,3 +46,41 @@ def read_admin_me(
     Get current admin.
     """
     return current_user
+
+@router.put("/{admin_id}", response_model=Admin)
+def update_admin(
+    *,
+    db: Session = Depends(deps.get_db),
+    admin_id: str,
+    admin_in: AdminUpdate,
+    current_user: Admin = Depends(deps.get_current_active_superuser),
+) -> Any:
+    """
+    Update an admin. Only for superusers.
+    """
+    admin = crud_admin.get_admin(db, admin_id=admin_id)
+    if not admin:
+        raise HTTPException(status_code=404, detail="Admin not found")
+    return crud_admin.update_admin(db, db_admin=admin, admin_update=admin_in)
+
+@router.delete("/{admin_id}", response_model=Admin)
+def delete_admin(
+    *,
+    db: Session = Depends(deps.get_db),
+    admin_id: str,
+    current_user: Admin = Depends(deps.get_current_active_superuser),
+) -> Any:
+    """
+    Delete an admin. Only for superusers.
+    """
+    admin = crud_admin.get_admin(db, admin_id=admin_id)
+    if not admin:
+        raise HTTPException(status_code=404, detail="Admin not found")
+    
+    # Prevent deleting the current user
+    if admin.id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot delete current admin")
+        
+    db.delete(admin)
+    db.commit()
+    return admin

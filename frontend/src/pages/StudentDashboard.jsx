@@ -64,7 +64,7 @@ const StudentDashboard = () => {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const response = await api.get('/dashboard/student/stats');
+                const response = await api.get('/dashboard/student/stats/');
                 setData(response.data);
             } catch (error) {
                 console.error("Failed to fetch student stats", error);

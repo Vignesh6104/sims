@@ -12,6 +12,7 @@ class TeacherCreate(TeacherBase):
     password: str
 
 class TeacherUpdate(TeacherBase):
+    email: Optional[EmailStr] = None
     password: Optional[str] = None
 
 class TeacherInDBBase(TeacherBase):

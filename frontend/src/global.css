@@ -2,6 +2,30 @@ html, body {
   margin: 0;
   padding: 0;
   overflow-x: hidden; /* Prevent horizontal scroll */
+  height: 100%;
+}
+
+/* 
+   Aggressively hide any elements injected into the body by extensions 
+   (like bbai-shadow-wrapper) that cause layout issues.
+   Only the #root div and scripts should exist.
+*/
+body > *:not(#root):not(script):not(style) {
+  display: none !important;
+  height: 0 !important;
+  width: 0 !important;
+  overflow: hidden !important;
+  position: absolute !important;
+  top: -9999px !important;
+  left: -9999px !important;
+  z-index: -9999 !important;
+  pointer-events: none !important;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
 body {
@@ -14,8 +38,8 @@ body {
   /* Minimal Light Gradient Background */
   background: linear-gradient(to right top, #e0eafc, #cfdef3, #e0eafc); /* Light, subtle blue/grey gradient */
   background-size: cover;
-  height: 100vh;
-  overflow-y: auto;
+  min-height: 100vh;
+  background-attachment: fixed;
   backdrop-filter: blur(8px); /* Apply blur to the background */
   -webkit-backdrop-filter: blur(8px); /* For Safari */
 }

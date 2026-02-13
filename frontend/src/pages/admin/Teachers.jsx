@@ -35,7 +35,7 @@ const Teachers = () => {
     const fetchTeachers = async () => {
         setLoading(true);
         try {
-            const response = await api.get('/teachers');
+            const response = await api.get('/teachers/');
             setTeachers(response.data);
         } catch (error) {
             enqueueSnackbar('Failed to fetch teachers', { variant: 'error' });
@@ -76,7 +76,7 @@ const Teachers = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this teacher?')) {
             try {
-                await api.delete(`/teachers/${id}`);
+                await api.delete(`/teachers/${id}/`);
                 enqueueSnackbar('Teacher deleted successfully', { variant: 'success' });
                 fetchTeachers();
             } catch (error) {
@@ -98,7 +98,7 @@ const Teachers = () => {
                 const updateData = { ...formData };
                 if (!updateData.password) delete updateData.password;
                 
-                await api.put(`/teachers/${selectedId}`, updateData);
+                await api.put(`/teachers/${selectedId}/`, updateData);
                 enqueueSnackbar('Teacher updated successfully', { variant: 'success' });
             } else {
                 await api.post('/auth/register/teacher', formData);
@@ -121,8 +121,10 @@ const Teachers = () => {
             field: 'actions',
             headerName: 'Actions',
             width: 150,
+            sortable: false,
+            filterable: false,
             renderCell: (params) => (
-                <Box>
+                <Box onClick={(e) => e.stopPropagation()}>
                     <Tooltip title="Edit">
                         <IconButton size="small" color="primary" onClick={() => handleEdit(params.row)}>
                             <EditIcon />
@@ -164,15 +166,24 @@ const Teachers = () => {
                 <DataGrid
                     rows={teachers}
                     columns={columns}
-                    pageSize={10}
-                    rowsPerPageOptions={[10]}
+                    initialState={{
+                        pagination: {
+                            paginationModel: { pageSize: 10 },
+                        },
+                    }}
+                    pageSizeOptions={[10]}
                     checkboxSelection
-                    disableSelectionOnClick
+                    disableRowSelectionOnClick
                     loading={loading}
                 />
             </Paper>
 
-            <Dialog open={open} onClose={handleClose}>
+            <Dialog 
+                open={open} 
+                onClose={handleClose}
+                disableEnforceFocus
+                disableAutoFocus
+            >
                 <DialogTitle>{editMode ? 'Edit Teacher' : 'Add New Teacher'}</DialogTitle>
                 <DialogContent>
                     <TextField

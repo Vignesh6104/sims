@@ -23,10 +23,12 @@ def read_my_notifications(
     from app.models.admin import Admin
     from app.models.teacher import Teacher
     from app.models.student import Student
+    from app.models.parent import Parent
     
     role = "student"
     if isinstance(current_user, Admin): role = "admin"
     elif isinstance(current_user, Teacher): role = "teacher"
+    elif isinstance(current_user, Parent): role = "parent"
     
     return crud_notification.get_notifications_for_user(db, user_id=current_user.id, role=role, skip=skip, limit=limit)
 

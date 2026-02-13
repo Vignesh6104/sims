@@ -4,7 +4,7 @@ import SchoolIcon from '@mui/icons-material/School';
 
 const PublicFooter = () => {
     return (
-        <Box sx={{ bgcolor: 'rgba(255, 255, 255, 0.7)', color: 'text.primary', py: 4, mt: 'auto', backdropFilter: 'blur(10px)' }}>
+        <Box sx={{ bgcolor: 'rgba(255, 255, 255, 0.7)', color: 'text.primary', py: 4, mt: 'auto', mb: 0, backdropFilter: 'blur(10px)' }}>
             <Container maxWidth="lg">
                 <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', alignItems: 'center' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 2, md: 0 } }}>

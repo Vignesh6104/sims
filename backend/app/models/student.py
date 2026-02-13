@@ -15,10 +15,12 @@ class Student(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     class_id = Column(String, ForeignKey("classrooms.id"), nullable=True)
+    parent_id = Column(String, ForeignKey("parents.id"), nullable=True)
     roll_number = Column(String, index=True)
     date_of_birth = Column(Date, nullable=True)
     address = Column(String, nullable=True)
 
     classroom = relationship("ClassRoom", back_populates="students")
+    parent = relationship("Parent", back_populates="students")
     attendance = relationship("Attendance", back_populates="student")
     marks = relationship("Mark", back_populates="student")

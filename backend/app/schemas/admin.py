@@ -12,6 +12,7 @@ class AdminCreate(AdminBase):
     password: str
 
 class AdminUpdate(AdminBase):
+    email: Optional[EmailStr] = None
     password: Optional[str] = None
 
 class AdminInDBBase(AdminBase):

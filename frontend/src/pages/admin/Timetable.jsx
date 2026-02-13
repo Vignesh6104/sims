@@ -44,9 +44,9 @@ const Timetable = () => {
         const fetchInitialData = async () => {
             try {
                 const [clsRes, subRes, tchRes] = await Promise.all([
-                    api.get('/class_rooms'),
-                    api.get('/subjects'),
-                    api.get('/teachers')
+                    api.get('/class_rooms/'),
+                    api.get('/subjects/'),
+                    api.get('/teachers/')
                 ]);
                 setClasses(clsRes.data);
                 setSubjects(subRes.data);
@@ -66,7 +66,7 @@ const Timetable = () => {
 
     const fetchTimetable = async () => {
         try {
-            const res = await api.get(`/timetable/class/${selectedClass}`);
+            const res = await api.get(`/timetable/class/${selectedClass}/`);
             setTimetable(res.data);
         } catch (error) {
             console.error("Failed to fetch timetable");
@@ -81,7 +81,7 @@ const Timetable = () => {
 
     const handleSubmit = async () => {
         try {
-            await api.post('/timetable', {
+            await api.post('/timetable/', {
                 class_id: selectedClass,
                 day: selectedSlot.day,
                 period: selectedSlot.period,
@@ -100,7 +100,7 @@ const Timetable = () => {
         e.stopPropagation();
         if (window.confirm('Delete this entry?')) {
             try {
-                await api.delete(`/timetable/${id}`);
+                await api.delete(`/timetable/${id}/`);
                 fetchTimetable();
             } catch (error) {
                 enqueueSnackbar('Failed to delete', { variant: 'error' });

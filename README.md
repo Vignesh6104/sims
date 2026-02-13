@@ -1,17 +1,25 @@
 # School Information Management System (SIMS)
 
-A comprehensive, full-stack application designed to streamline school operations, academic tracking, and communication between administrators, teachers, and students.
+A comprehensive, full-stack application designed to streamline school operations, academic tracking, and communication between administrators, teachers, parents, and students.
 
 ## 🚀 Key Features
 
-- **Multi-Role Dashboards:** Specialized interfaces for Admins, Teachers, and Students.
-- **Academic Management:** Timetable, Subject, Class, and Exam tracking.
-- **Assignment System:** File-based submissions with re-submission capabilities.
-- **Grading & Reporting:** Consistently tracked Exam marks and Assignment grades.
-- **Communication:** Global notification and announcement system.
+- **Multi-Role Dashboards:** Specialized interfaces for Admins, Teachers, Parents, and Students.
+- **Academic Management:** Timetable, Subject, Class, Exam, and Attendance tracking.
+- **Assignment System:** Cloud-based file submissions (via Cloudinary) with re-submission capabilities.
+- **Grading & Reporting:** 
+    - Consistently tracked Exam marks and Assignment grades.
+    - Automated PDF report generation for student performance.
+- **Financial Management:** Fee tracking, payment status, and history for students and parents.
+- **Library System:** Catalog management, book issuing, and availability tracking.
+- **Communication & Events:** 
+    - Global notification and announcement system.
+    - Integrated school calendar for events and holidays.
+- **Data Visualization:** Interactive dashboards with charts for attendance, marks, and financial trends.
 - **Security:** 
     - JWT authentication with **Refresh Token** mechanism for seamless UX.
     - Secure password recovery flow with time-limited tokens.
+    - Role-based access control (RBAC) across all endpoints.
 
 ---
 
@@ -23,17 +31,20 @@ A comprehensive, full-stack application designed to streamline school operations
 - **ORM:** [SQLAlchemy](https://www.sqlalchemy.org/) - SQL Toolkit and Object-Relational Mapper.
 - **Migrations:** [Alembic](https://alembic.sqlalchemy.org/) - Lightweight database migration tool.
 - **Authentication:** [Jose JWT](https://python-jose.readthedocs.io/) & [Passlib (Bcrypt)](https://passlib.readthedocs.io/).
-- **Validation:** [Pydantic](https://docs.pydantic.dev/) - Data validation and settings management.
+- **File Storage:** [Cloudinary](https://cloudinary.com/) - Cloud-based image and video management.
+- **PDF Generation:** [ReportLab](https://www.reportlab.com/) - Engine for creating complex PDF documents.
+- **Validation:** [Pydantic v2](https://docs.pydantic.dev/) - Data validation and settings management.
 
 ### Frontend
 - **Framework:** [React 18](https://reactjs.org/) with [Vite](https://vitejs.dev/) for fast builds.
 - **UI Library:** [Material UI (MUI) 5](https://mui.com/) - React components for faster web development.
+- **Data Grids:** [@mui/x-data-grid](https://mui.com/x/react-data-grid/) for complex data handling.
+- **Visualizations:** [Recharts](https://recharts.org/) - Composable charting library.
+- **Calendar:** [React Big Calendar](https://jquense.github.io/react-big-calendar/) - Flexbox-based calendar component.
 - **Routing:** [React Router 6](https://reactrouter.com/) - Declarative routing for React.
 - **State Management:** React Context API (Auth) & Hooks.
 - **API Client:** [Axios](https://axios-http.com/) - Promise-based HTTP client.
 - **Form Handling:** [React Hook Form](https://react-hook-form.com/).
-- **Notifications:** [Notistack](https://notistack.com/) - Stackable snackbars for React.
-- **Animation:** [Framer Motion](https://www.framer.com/motion/).
 
 ---
 
@@ -41,18 +52,20 @@ A comprehensive, full-stack application designed to streamline school operations
 
 ### Backend (`/backend`)
 - `app/`
-    - `api/v1/`: API endpoints categorized by module (auth, assignments, marks, etc.).
+    - `api/v1/`: API endpoints categorized by module:
+        - `auth.py`, `admins.py`, `students.py`, `teachers.py`, `parents.py`: User management.
+        - `attendance.py`, `marks.py`, `exams.py`, `assignments.py`: Academic records.
+        - `class_rooms.py`, `subjects.py`, `timetable.py`: School structure.
+        - `fees.py`, `library.py`, `notifications.py`, `events.py`: School services.
+        - `dashboard.py`: Aggregated data for role-specific homepages.
     - `core/`: Core configuration, security utilities, and global dependencies.
-    - `crud/`: Create, Read, Update, Delete logic for database models.
+    - `crud/`: CRUD logic for each database model.
     - `db/`: Database session management, base models, and initialization scripts.
-    - `models/`: SQLAlchemy ORM models (Admin, Teacher, Student, Assignment, etc.).
+    - `models/`: SQLAlchemy ORM models.
     - `schemas/`: Pydantic schemas for data validation and serialization.
-    - `services/`: Business logic services (attendance, marks processing).
-    - `utils/`: Utility helpers like role checkers and response formatters.
+    - `services/`: Complex business logic (e.g., marks processing, attendance calculation).
+    - `utils/`: Utility helpers like `pdf_generator.py` and role checkers.
 - `alembic/`: Database migration environment and version scripts.
-- `uploads/`: Local storage for submitted assignment files.
-- `main.py`: FastAPI application setup and middleware configuration.
-- `run.py`: Script to start the FastAPI development server.
 - `run_init.py`: Script to initialize the database with default data/superuser.
 - `reset_db.py`: Utility to wipe and recreate the database.
 
@@ -61,14 +74,47 @@ A comprehensive, full-stack application designed to streamline school operations
     - `api/`: Axios instances and API service definitions.
     - `components/`: Reusable UI components (Navbar, Sidebar, Layout, ProtectedRoute).
     - `context/`: AuthContext for global user state management.
-    - `hooks/`: Custom React hooks (e.g., `useAuth`).
     - `pages/`: 
-        - `admin/`: Admin-only features (User mgmt, Fees, Timetable).
-        - `teacher/`: Teacher-only features (Grading, Attendance).
-        - `student/`: Student-only features (Submissions, Marks).
+        - `admin/`: Management of Users, Fees, Library, and School structure.
+        - `teacher/`: Grading, Attendance, and Timetable views.
+        - `student/`: Submissions, Attendance, Marks, and Library.
+        - `ParentDashboard.jsx`: Monitoring student progress and fees.
     - `utils/`: Frontend helper functions and role utilities.
-    - `App.jsx`: Main routing configuration.
-    - `main.jsx`: React entry point.
+    - `routes.jsx`: Main routing configuration.
+
+---
+
+## 🏗️ Project Architecture
+
+This section provides a high-level overview of the system design, intended to assist in creating UML diagrams and understanding the data flow.
+
+### 1. System Components (Component Diagram)
+- **Frontend (Client):** A React-based Single Page Application (SPA) using **Material UI** for the presentation layer and **Axios** for asynchronous API communication.
+- **Backend (Server):** A **FastAPI** RESTful service following a layered architecture:
+    - **API Layer:** Handles request routing, JWT validation, and input parsing.
+    - **Service Layer:** Executes complex business logic (e.g., PDF generation, Cloudinary uploads).
+    - **CRUD Layer:** Encapsulates database operations for maintainability.
+    - **ORM Layer:** SQLAlchemy maps Python objects to the relational database schema.
+- **External Services:**
+    - **Cloudinary:** Primary storage for submitted assignment files and documents.
+    - **PostgreSQL:** Persistent storage for all relational data.
+
+### 2. Core Data Models (Class Diagram)
+The system is built around several key entity clusters:
+- **User Management:** An inheritance-like structure where `Admin`, `Teacher`, `Student`, and `Parent` roles share authentication logic but have distinct profiles.
+- **Academic Structure:** 
+    - `ClassRoom` links `Students`, `Subjects`, and `Timetable` entries.
+    - `Subject` connects a specific course of study to a `Teacher`.
+- **Student Records:**
+    - `Attendance`: Tracks daily presence per student/subject.
+    - `Marks` & `Exams`: Records academic performance.
+    - `Assignments`: Tracks cloud-stored files and teacher feedback.
+- **Support Systems:** `Library` (books/issuance), `Fees` (financial tracking), and `Notifications`.
+
+### 3. Key Logical Flows (Sequence Diagrams)
+- **Authentication:** Login -> JWT Generation -> Storage in Browser Context -> Interceptor-based API calls.
+- **Assignment Submission:** Frontend Upload -> FastAPI Service -> Cloudinary Storage -> Database Record Update.
+- **Report Generation:** User Request -> Service Layer -> Data Aggregation -> ReportLab PDF Generation -> File Stream Return.
 
 ---
 
@@ -77,7 +123,8 @@ A comprehensive, full-stack application designed to streamline school operations
 ### 1. Prerequisites
 - Python 3.12+
 - Node.js 18+ & npm
-- PostgreSQL (or SQLite for local development as configured in `.env`)
+- PostgreSQL (or SQLite for local development)
+- Cloudinary Account (for file uploads)
 
 ### 2. Backend Setup
 1. **Navigate to the directory:**
@@ -97,25 +144,27 @@ A comprehensive, full-stack application designed to streamline school operations
    pip install -r requirements.txt
    ```
 4. **Environment Variables:**
-   Configure the `.env` file in the `backend/` directory with your database credentials and secret keys.
+   Copy `.env.example` to `.env` and fill in:
+   - `SQLALCHEMY_DATABASE_URI`
+   - `SECRET_KEY`
+   - `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`
 5. **Database Migrations (Alembic):**
    ```bash
-   # Apply migrations to the latest version
    alembic upgrade head
-   
-   # To create a new migration after model changes:
-   # alembic revision --autogenerate -m "description of changes"
    ```
 6. **Initialize Data:**
-   Run the initialization script to create the default admin user and essential data:
+   Run the initialization script to create the default admin user:
    ```bash
    python run_init.py
    ```
+   **Default Credentials:**
+   - **Email:** `admin@school.com`
+   - **Password:** `admin`
+
 7. **Run the Server:**
    ```bash
    python run.py
    ```
-   The API will be available at `http://localhost:8000`.
 
 ### 3. Frontend Setup
 1. **Navigate to the directory:**
@@ -126,26 +175,20 @@ A comprehensive, full-stack application designed to streamline school operations
    ```bash
    npm install
    ```
-3. **Run the Development Server:**
+3. **Environment Variables:**
+   Create a `.env` file with `VITE_API_URL=http://localhost:8000/api/v1`.
+4. **Run the Development Server:**
    ```bash
    npm run dev
    ```
-   The application will be available at `http://localhost:5173`.
 
 ---
 
 ## 🗄️ Database Management
 
-### Running Migrations
-We use Alembic for version control of the database schema.
-- **Upgrade:** `alembic upgrade head`
-- **Downgrade:** `alembic downgrade -1`
-- **History:** `alembic history`
-
-### Troubleshooting
-- If you encounter database conflicts during development, you can use `python reset_db.py` to wipe the database and start fresh (Warning: this deletes all data).
-- Ensure the `PYTHONPATH` is set to the current directory if running scripts manually:
-  `$env:PYTHONPATH="."` (Windows PowerShell)
+- **Apply Migrations:** `alembic upgrade head`
+- **Revert Last Migration:** `alembic downgrade -1`
+- **Reset Database:** `python reset_db.py` (Deletes all data, use with caution)
 
 ---
 *Built to provide a modern, efficient experience for school administration.*

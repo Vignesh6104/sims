@@ -32,7 +32,7 @@ const Subjects = () => {
     const fetchSubjects = async () => {
         setLoading(true);
         try {
-            const response = await api.get('/subjects');
+            const response = await api.get('/subjects/');
             setSubjects(response.data);
         } catch (error) {
             enqueueSnackbar('Failed to fetch subjects', { variant: 'error' });
@@ -64,7 +64,7 @@ const Subjects = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this subject?')) {
             try {
-                await api.delete(`/subjects/${id}`);
+                await api.delete(`/subjects/${id}/`);
                 enqueueSnackbar('Subject deleted successfully', { variant: 'success' });
                 fetchSubjects();
             } catch (error) {
@@ -82,10 +82,10 @@ const Subjects = () => {
     const handleSubmit = async () => {
         try {
             if (editMode) {
-                await api.put(`/subjects/${selectedId}`, formData);
+                await api.put(`/subjects/${selectedId}/`, formData);
                 enqueueSnackbar('Subject updated successfully', { variant: 'success' });
             } else {
-                await api.post('/subjects', formData);
+                await api.post('/subjects/', formData);
                 enqueueSnackbar('Subject added successfully', { variant: 'success' });
             }
             fetchSubjects();
@@ -102,8 +102,10 @@ const Subjects = () => {
             field: 'actions',
             headerName: 'Actions',
             width: 150,
+            sortable: false,
+            filterable: false,
             renderCell: (params) => (
-                <Box>
+                <Box onClick={(e) => e.stopPropagation()}>
                     <Tooltip title="Edit">
                         <IconButton size="small" color="primary" onClick={() => handleEdit(params.row)}>
                             <EditIcon />
@@ -145,10 +147,14 @@ const Subjects = () => {
                 <DataGrid
                     rows={subjects}
                     columns={columns}
-                    pageSize={10}
-                    rowsPerPageOptions={[10]}
+                    initialState={{
+                        pagination: {
+                            paginationModel: { pageSize: 10 },
+                        },
+                    }}
+                    pageSizeOptions={[10]}
                     checkboxSelection
-                    disableSelectionOnClick
+                    disableRowSelectionOnClick
                     loading={loading}
                 />
             </Paper>

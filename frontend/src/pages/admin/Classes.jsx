@@ -38,8 +38,8 @@ const Classes = () => {
         setLoading(true);
         try {
             const [classesRes, teachersRes] = await Promise.all([
-                api.get('/class_rooms'),
-                api.get('/teachers')
+                api.get('/class_rooms/'),
+                api.get('/teachers/')
             ]);
             setClasses(classesRes.data);
             setTeachers(teachersRes.data);
@@ -73,7 +73,7 @@ const Classes = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this class?')) {
             try {
-                await api.delete(`/class_rooms/${id}`);
+                await api.delete(`/class_rooms/${id}/`);
                 enqueueSnackbar('Class deleted successfully', { variant: 'success' });
                 fetchData();
             } catch (error) {
@@ -94,10 +94,10 @@ const Classes = () => {
             if (payload.teacher_id === '') payload.teacher_id = null;
 
             if (editMode) {
-                await api.put(`/class_rooms/${selectedId}`, payload);
+                await api.put(`/class_rooms/${selectedId}/`, payload);
                 enqueueSnackbar('Class updated successfully', { variant: 'success' });
             } else {
-                await api.post('/class_rooms', payload);
+                await api.post('/class_rooms/', payload);
                 enqueueSnackbar('Class added successfully', { variant: 'success' });
             }
             fetchData();
@@ -122,8 +122,10 @@ const Classes = () => {
             field: 'actions',
             headerName: 'Actions',
             width: 150,
+            sortable: false,
+            filterable: false,
             renderCell: (params) => (
-                <Box>
+                <Box onClick={(e) => e.stopPropagation()}>
                     <Tooltip title="Edit">
                         <IconButton size="small" color="primary" onClick={() => handleEdit(params.row)}>
                             <EditIcon />
@@ -165,10 +167,14 @@ const Classes = () => {
                 <DataGrid
                     rows={classes}
                     columns={columns}
-                    pageSize={10}
-                    rowsPerPageOptions={[10]}
+                    initialState={{
+                        pagination: {
+                            paginationModel: { pageSize: 10 },
+                        },
+                    }}
+                    pageSizeOptions={[10]}
                     checkboxSelection
-                    disableSelectionOnClick
+                    disableRowSelectionOnClick
                     loading={loading}
                 />
             </Paper>

@@ -9,12 +9,14 @@ class StudentBase(BaseModel):
     date_of_birth: Optional[date] = None
     address: Optional[str] = None
     class_id: Optional[str] = None
+    parent_id: Optional[str] = None
     is_active: Optional[bool] = True
 
 class StudentCreate(StudentBase):
     password: str
 
 class StudentUpdate(StudentBase):
+    email: Optional[EmailStr] = None
     password: Optional[str] = None
 
 class StudentInDBBase(StudentBase):

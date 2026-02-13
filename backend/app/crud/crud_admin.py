@@ -41,3 +41,10 @@ def update_admin(db: Session, db_admin: Admin, admin_update: AdminUpdate):
     db.commit()
     db.refresh(db_admin)
     return db_admin
+
+def delete_admin(db: Session, admin_id: str):
+    db_admin = db.query(Admin).filter(Admin.id == admin_id).first()
+    if db_admin:
+        db.delete(db_admin)
+        db.commit()
+    return db_admin

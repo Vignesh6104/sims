@@ -14,11 +14,13 @@ import {
     Card,
     CardContent,
     CircularProgress,
-    Avatar
+    Avatar,
+    Button
 } from '@mui/material';
-import { Assignment, EmojiEvents, TrendingUp } from '@mui/icons-material';
+import { Assignment, EmojiEvents, TrendingUp, Download as DownloadIcon } from '@mui/icons-material';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
+import { useSnackbar } from 'notistack';
 
 const StatCard = ({ title, value, icon, color }) => (
     <Card sx={{ height: '100%' }}>
@@ -42,6 +44,7 @@ const StatCard = ({ title, value, icon, color }) => (
 
 const Marks = () => {
     const { user } = useAuth();
+    const { enqueueSnackbar } = useSnackbar();
     const [marks, setMarks] = useState([]);
     const [submissions, setSubmissions] = useState([]);
     const [assignments, setAssignments] = useState([]);
@@ -102,15 +105,44 @@ const Marks = () => {
         return 'F';
     };
 
+    const handleDownloadReport = async () => {
+        try {
+            const response = await api.get(`/marks/report-card/${user.sub}`, {
+                responseType: 'blob',
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `Report_Card.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            enqueueSnackbar("Report card downloaded successfully", { variant: 'success' });
+        } catch (error) {
+            console.error("Download failed", error);
+            enqueueSnackbar("Failed to download report card", { variant: 'error' });
+        }
+    };
+
     const getResultColor = (percentage) => percentage >= 50 ? 'success' : 'error';
 
     if (loading) return <CircularProgress />;
 
     return (
         <Box>
-            <Typography variant="h4" fontWeight="bold" sx={{ mb: 3 }}>
-                My Performance
-            </Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography variant="h4" fontWeight="bold">
+                    My Performance
+                </Typography>
+                <Button 
+                    variant="contained" 
+                    color="secondary" 
+                    startIcon={<DownloadIcon />}
+                    onClick={handleDownloadReport}
+                >
+                    Download Report Card
+                </Button>
+            </Box>
 
             <Grid container spacing={3} sx={{ mb: 4 }}>
                 <Grid item xs={12} sm={4}>

@@ -47,7 +47,7 @@ const Attendance = () => {
     useEffect(() => {
         const fetchClasses = async () => {
             try {
-                const response = await api.get(`/class_rooms?teacher_id=${user.sub}`);
+                const response = await api.get(`/class_rooms/?teacher_id=${user.sub}`);
                 setClasses(response.data);
             } catch (error) {
                 console.error("Failed to fetch classes", error);
@@ -70,7 +70,7 @@ const Attendance = () => {
     const fetchStudents = async (classId) => {
         setLoading(true);
         try {
-            const response = await api.get(`/students?class_id=${classId}`);
+            const response = await api.get(`/students/?class_id=${classId}`);
             setStudents(response.data);
             const initialData = {};
             response.data.forEach(student => {
@@ -87,7 +87,7 @@ const Attendance = () => {
     const fetchReport = async (classId) => {
         setLoading(true);
         try {
-            const response = await api.get(`/attendance/report?class_id=${classId}`);
+            const response = await api.get(`/attendance/report/?class_id=${classId}`);
             setReportData(response.data);
         } catch (error) {
             enqueueSnackbar('Failed to fetch report', { variant: 'error' });
@@ -107,7 +107,7 @@ const Attendance = () => {
         setLoading(true);
         try {
             const promises = students.map(student => {
-                return api.post('/attendance', {
+                return api.post('/attendance/', {
                     student_id: student.id,
                     date: selectedDate,
                     status: attendanceData[student.id]
