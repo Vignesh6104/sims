@@ -19,3 +19,4 @@ class Attendance(Base):
     remarks = Column(String, nullable=True)
 
     student = relationship("Student", back_populates="attendance")
+    
