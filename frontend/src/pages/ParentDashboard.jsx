@@ -7,7 +7,9 @@ import {
     ClipboardList,
     ChevronDown,
     Loader2,
-    Info
+    Info,
+    TrendingUp,
+    Clock
 } from 'lucide-react';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
