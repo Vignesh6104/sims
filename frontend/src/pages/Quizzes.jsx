@@ -16,6 +16,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
     DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -58,9 +59,9 @@ const Quizzes = () => {
         setLoading(true);
         try {
             const [quizRes, classRes, subRes] = await Promise.all([
-                api.get('/quizzes/'),
-                api.get('/class_rooms/'),
-                api.get('/subjects/')
+                api.get('/quizzes'),
+                api.get('/class_rooms'),
+                api.get('/subjects')
             ]);
             setQuizzes(quizRes.data);
             setClasses(classRes.data);
@@ -101,7 +102,7 @@ const Quizzes = () => {
 
     const handleSubmit = async () => {
         try {
-            await api.post('/quizzes/', formData);
+            await api.post('/quizzes', formData);
             toast({
                 title: "Success",
                 description: "Quiz created successfully",

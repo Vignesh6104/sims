@@ -34,6 +34,8 @@ import Profile from './pages/Profile';
 import Leaves from './pages/Leaves';
 import Feedbacks from './pages/Feedbacks';
 import Quizzes from './pages/Quizzes';
+import TakeQuiz from './pages/student/TakeQuiz';
+import Messages from './pages/Messages';
 import Salaries from './pages/admin/Salaries';
 import Assets from './pages/admin/Assets';
 
@@ -72,6 +74,7 @@ function App() {
           <Route path="feedbacks" element={<Feedbacks />} />
           <Route path="salaries" element={<Salaries />} />
           <Route path="assets" element={<Assets />} />
+          <Route path="messages" element={<Messages />} />
           <Route path="profile" element={<Profile />} />
         </Route>
       </Route>
@@ -87,6 +90,7 @@ function App() {
           <Route path="leaves" element={<Leaves />} />
           <Route path="feedbacks" element={<Feedbacks />} />
           <Route path="assets" element={<Assets />} />
+          <Route path="messages" element={<Messages />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="calendar" element={<Calendar />} />
           <Route path="library" element={<LibraryCatalog />} />
@@ -102,8 +106,10 @@ function App() {
           <Route path="marks" element={<StudentMarks />} />
           <Route path="assignments" element={<StudentAssignments />} />
           <Route path="quizzes" element={<Quizzes />} />
+          <Route path="quiz/:id" element={<TakeQuiz />} />
           <Route path="leaves" element={<Leaves />} />
           <Route path="feedbacks" element={<Feedbacks />} />
+          <Route path="messages" element={<Messages />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="calendar" element={<Calendar />} />
           <Route path="library" element={<LibraryCatalog />} />
@@ -116,6 +122,7 @@ function App() {
         <Route path="/parent" element={<Layout />}>
           <Route index element={<ParentDashboard />} />
           <Route path="feedbacks" element={<Feedbacks />} />
+          <Route path="messages" element={<Messages />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="calendar" element={<Calendar />} />
           <Route path="profile" element={<Profile />} />

@@ -55,6 +55,7 @@ The frontend is organized by feature and function:
 - **`src/context/AuthContext.jsx`**: Manages user session state (`user`, `role`, `token`). It handles login, logout, and initial profile fetching.
 - **`src/components/`**: Reusable UI components. `ProtectedRoute.jsx` checks user roles and redirects unauthorized access.
 - **`src/pages/`**: Application views, often organized by user role (e.g., `admin/`, `teacher/`, `student/`).
+    - **`student/TakeQuiz.jsx`**: Interactive interface for students to complete assessments with a real-time timer.
 - **`src/routes.jsx`**: (Likely deprecated/unused in favor of direct routing in `App.jsx`).
 - **`src/App.jsx`**: The main entry point defining the routing structure and layout wrappers.
 
@@ -90,6 +91,7 @@ The frontend is organized by feature and function:
 5.  **Communication:**
     - **Leave Management:** Application and approval workflow for students/teachers.
     - **Feedback System:** Grievance and feedback submission for all users.
+    - **Private Messaging:** Internal chat system for direct communication between all user roles.
 
 ### Data Handling
 - **Bulk Uploads:** The system supports uploading CSV files for bulk creation of records (e.g., `students/upload` endpoint), handling validation and duplicate checks efficiently.

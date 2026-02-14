@@ -21,3 +21,4 @@ from app.models.feedback import Feedback
 from app.models.quiz import Quiz, QuizResult
 from app.models.salary import Salary, PayrollRecord
 from app.models.asset import Asset
+from app.models.message import Message
