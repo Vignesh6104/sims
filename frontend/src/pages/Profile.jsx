@@ -28,6 +28,7 @@ import {
     DialogContent, 
     DialogHeader, 
     DialogTitle, 
+    DialogDescription,
     DialogFooter 
 } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
@@ -376,6 +377,7 @@ const Profile = () => {
                 <DialogContent className="sm:max-w-[500px]">
                     <DialogHeader>
                         <DialogTitle>Crop Profile Image</DialogTitle>
+                        <DialogDescription>Adjust your profile picture before uploading.</DialogDescription>
                     </DialogHeader>
                     <div className="relative w-full h-80 bg-gray-100 rounded-lg overflow-hidden">
                         {imageSrc && (

@@ -16,6 +16,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
     DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -243,6 +244,7 @@ const Leaves = () => {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Apply for Leave</DialogTitle>
+                        <DialogDescription>Submit your leave request for approval.</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-2 gap-4">

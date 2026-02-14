@@ -15,6 +15,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
     DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -208,6 +209,7 @@ const Feedbacks = () => {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Submit New Feedback</DialogTitle>
+                        <DialogDescription>Share your suggestions or report issues.</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
@@ -244,6 +246,7 @@ const Feedbacks = () => {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Respond to Feedback</DialogTitle>
+                        <DialogDescription>Provide a resolution for this feedback.</DialogDescription>
                     </DialogHeader>
                     {selectedFeedback && (
                         <div className="space-y-4 py-4">
