@@ -4,6 +4,7 @@ from typing import Optional
 class Settings(BaseSettings):
     PROJECT_NAME: str
     API_V1_STR: str
+    FRONTEND_URL: str = "http://localhost:5173"
     
     # Database
     SQLALCHEMY_DATABASE_URI: str
