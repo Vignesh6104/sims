@@ -1,32 +1,33 @@
 import React from 'react';
-import { Box, Typography, Container, Link } from '@mui/material';
-import SchoolIcon from '@mui/icons-material/School';
+import { School } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const PublicFooter = () => {
     return (
-        <Box sx={{ bgcolor: 'rgba(255, 255, 255, 0.7)', color: 'text.primary', py: 4, mt: 'auto', mb: 0, backdropFilter: 'blur(10px)' }}>
-            <Container maxWidth="lg">
-                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 2, md: 0 } }}>
-                        <SchoolIcon sx={{ mr: 1, color: 'primary.main' }} />
-                        <Typography variant="h6" noWrap>
+        <footer className="w-full border-t bg-white/70 backdrop-blur-md py-12">
+            <div className="container mx-auto px-4">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+                    <div className="flex items-center gap-2">
+                        <div className="p-1.5 bg-blue-600 rounded-lg text-white">
+                            <School size={20} />
+                        </div>
+                        <span className="text-xl font-black text-blue-900 tracking-tighter uppercase">
                             SIMS Academy
-                        </Typography>
-                    </Box>
-                    <Box sx={{ mb: { xs: 2, md: 0 } }}>
-                        <Typography variant="body2" color="inherit" align="center">
-                            © {new Date().getFullYear()} SIMS Academy. All rights reserved.
-                        </Typography>
-                    </Box>
-                    <Box>
-                        <Link href="#" color="inherit" sx={{ mx: 1 }}>Privacy Policy</Link>
-                        <Link href="#" color="inherit" sx={{ mx: 1 }}>Terms of Service</Link>
-                    </Box>
-                </Box>
-            </Container>
-        </Box>
+                        </span>
+                    </div>
+                    
+                    <p className="text-sm text-muted-foreground font-medium order-3 md:order-2">
+                        © {new Date().getFullYear()} SIMS Academy. All rights reserved.
+                    </p>
+                    
+                    <div className="flex items-center gap-6 order-2 md:order-3">
+                        <Link href="#" className="text-sm font-semibold text-gray-500 hover:text-blue-600 transition-colors">Privacy Policy</Link>
+                        <Link href="#" className="text-sm font-semibold text-gray-500 hover:text-blue-600 transition-colors">Terms of Service</Link>
+                    </div>
+                </div>
+            </div>
+        </footer>
     );
 };
 
 export default PublicFooter;
-

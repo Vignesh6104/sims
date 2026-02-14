@@ -11,6 +11,30 @@ def get_attendance_by_student(db: Session, student_id: str, skip: int = 0, limit
     return db.query(Attendance).filter(Attendance.student_id == student_id).offset(skip).limit(limit).all()
 
 def create_attendance(db: Session, attendance: AttendanceCreate):
+    """
+    Record attendance for a student.
+    
+    Includes an UPSERT mechanism:
+    If a record already exists for the given student and date, it updates the status 
+    and remarks instead of creating a duplicate. This ensures data integrity 
+    for daily attendance logs.
+    """
+    # Check if attendance already exists for this student on this date
+    existing = db.query(Attendance).filter(
+        Attendance.student_id == attendance.student_id,
+        Attendance.date == attendance.date
+    ).first()
+    
+    if existing:
+        # Update existing record
+        existing.status = attendance.status
+        existing.remarks = attendance.remarks
+        db.add(existing)
+        db.commit()
+        db.refresh(existing)
+        return existing
+    
+    # Create new record
     db_attendance = Attendance(**attendance.model_dump())
     db.add(db_attendance)
     db.commit()

@@ -1,54 +1,62 @@
 import React, { useState, useEffect } from 'react';
-import {
-    Box,
-    Paper,
-    Typography,
-    Select,
-    MenuItem,
-    FormControl,
-    InputLabel,
-    TextField,
-    Button,
-    Grid,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    CircularProgress,
-    Tabs,
-    Tab
-} from '@mui/material';
+import { 
+    Award, 
+    BarChart3, 
+    FileText, 
+    Search, 
+    ChevronRight, 
+    Loader2, 
+    CheckCircle2, 
+    Clock,
+    Filter,
+    Plus,
+    Save
+} from 'lucide-react';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
-import { useSnackbar } from 'notistack';
+import { useToast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { 
+    Table, 
+    TableBody, 
+    TableCell, 
+    TableHead, 
+    TableHeader, 
+    TableRow 
+} from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { cn } from '@/lib/utils';
 
 const Marks = () => {
     const { user } = useAuth();
-    const [tabValue, setTabValue] = useState(0);
-    
-    // Data State
     const [classes, setClasses] = useState([]);
     const [exams, setExams] = useState([]);
     const [subjects, setSubjects] = useState([]);
     const [assignments, setAssignments] = useState([]);
     
-    // Selection State
     const [selectedClass, setSelectedIdClass] = useState('');
     const [selectedExam, setSelectedExam] = useState('');
     const [selectedSubject, setSelectedSubject] = useState('');
     
-    // Entry State
     const [students, setStudents] = useState([]);
     const [marksData, setMarksData] = useState({});
     
-    // Report State
     const [reportData, setReportData] = useState([]);
     const [assignmentSubmissions, setAssignmentSubmissions] = useState([]);
     
     const [loading, setLoading] = useState(false);
-    const { enqueueSnackbar } = useSnackbar();
+    const { toast } = useToast();
 
     useEffect(() => {
         const fetchInitialData = async () => {
@@ -68,69 +76,20 @@ const Marks = () => {
         if (user?.sub) fetchInitialData();
     }, [user]);
 
-    // Handle Entry Logic
-    useEffect(() => {
-        if (tabValue === 0 && selectedClass && selectedExam && selectedSubject) {
-            fetchStudentsAndMarks();
-        }
-    }, [selectedClass, selectedExam, selectedSubject, tabValue]);
-
-    // Handle Report Logic
-    useEffect(() => {
-        if (tabValue === 1 && selectedClass) {
-            fetchReport(selectedClass);
-        }
-    }, [selectedClass, tabValue]);
-
-    // Handle Assignment Grades Logic
-    useEffect(() => {
-        if (tabValue === 2 && selectedClass) {
-            fetchAssignmentGrades(selectedClass);
-        }
-    }, [selectedClass, tabValue]);
-
-    const fetchAssignmentGrades = async (classId) => {
+    const fetchStudentsAndMarks = async (classId, examId, subjId) => {
         setLoading(true);
         try {
-            const [assignRes, studentsRes] = await Promise.all([
-                api.get(`/assignments/class/${classId}`),
-                api.get(`/students?class_id=${classId}`)
-            ]);
-            
-            const assignmentsList = assignRes.data;
-            const studentsList = studentsRes.data;
-            setAssignments(assignmentsList);
-            setStudents(studentsList);
-
-            // Fetch all submissions for these assignments
-            const submissionsPromises = assignmentsList.map(a => 
-                api.get(`/assignments/submissions/${a.id}`)
-            );
-            const submissionsResponses = await Promise.all(submissionsPromises);
-            const allSubmissions = submissionsResponses.flatMap(r => r.data);
-            setAssignmentSubmissions(allSubmissions);
-
-        } catch (error) {
-            enqueueSnackbar('Failed to fetch assignment grades', { variant: 'error' });
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const fetchStudentsAndMarks = async () => {
-        setLoading(true);
-        try {
-            const studentsRes = await api.get(`/students?class_id=${selectedClass}`);
+            const studentsRes = await api.get(`/students?class_id=${classId}`);
             const studentsList = studentsRes.data;
             setStudents(studentsList);
 
             if (studentsList.length > 0) {
                 const studentIds = studentsList.map(s => s.id);
-                const subjObj = subjects.find(s => s.id === selectedSubject);
+                const subjObj = subjects.find(s => String(s.id) === String(subjId));
                 const subjName = subjObj ? subjObj.name : '';
                 
                 const params = new URLSearchParams();
-                params.append('exam_id', selectedExam);
+                params.append('exam_id', examId);
                 params.append('subject', subjName);
                 studentIds.forEach(id => params.append('student_ids', id));
 
@@ -152,7 +111,11 @@ const Marks = () => {
                 setMarksData(newMarksData);
             }
         } catch (error) {
-            enqueueSnackbar('Failed to fetch marks', { variant: 'error' });
+            toast({
+                title: "Error",
+                description: "Failed to fetch marks data",
+                variant: "destructive",
+            });
         } finally {
             setLoading(false);
         }
@@ -164,7 +127,34 @@ const Marks = () => {
             const response = await api.get(`/marks/report?class_id=${classId}`);
             setReportData(response.data);
         } catch (error) {
-            enqueueSnackbar('Failed to fetch report', { variant: 'error' });
+            console.error("Failed to fetch report");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchAssignmentGrades = async (classId) => {
+        setLoading(true);
+        try {
+            const [assignRes, studentsRes] = await Promise.all([
+                api.get(`/assignments/class/${classId}`),
+                api.get(`/students?class_id=${classId}`)
+            ]);
+            
+            const assignmentsList = assignRes.data;
+            const studentsList = studentsRes.data;
+            setAssignments(assignmentsList);
+            setStudents(studentsList);
+
+            const submissionsPromises = assignmentsList.map(a => 
+                api.get(`/assignments/submissions/${a.id}`)
+            );
+            const submissionsResponses = await Promise.all(submissionsPromises);
+            const allSubmissions = submissionsResponses.flatMap(r => r.data);
+            setAssignmentSubmissions(allSubmissions);
+
+        } catch (error) {
+            console.error("Failed to fetch assignment grades");
         } finally {
             setLoading(false);
         }
@@ -183,7 +173,7 @@ const Marks = () => {
     const handleSubmit = async () => {
         setLoading(true);
         try {
-            const subjObj = subjects.find(s => s.id === selectedSubject);
+            const subjObj = subjects.find(s => String(s.id) === String(selectedSubject));
             const subjName = subjObj ? subjObj.name : '';
 
             const promises = students.map(student => {
@@ -206,246 +196,259 @@ const Marks = () => {
             }).filter(p => p !== null);
             
             await Promise.all(promises);
-            enqueueSnackbar('Marks saved successfully!', { variant: 'success' });
-            fetchStudentsAndMarks();
+            toast({
+                title: "Success",
+                description: "Marks saved successfully!",
+            });
+            fetchStudentsAndMarks(selectedClass, selectedExam, selectedSubject);
         } catch (error) {
-            enqueueSnackbar('Failed to save marks', { variant: 'error' });
+            toast({
+                title: "Error",
+                description: "Failed to save marks",
+                variant: "destructive",
+            });
         } finally {
             setLoading(false);
         }
     };
 
-    const handleTabChange = (event, newValue) => {
-        setTabValue(newValue);
-    };
-
     return (
-        <Box>
-            <Typography variant="h4" fontWeight="bold" sx={{ mb: 3 }}>
-                Marks Management
-            </Typography>
+        <div className="space-y-6 animate-in fade-in duration-500">
+            <div className="flex flex-col space-y-2">
+                <h2 className="text-3xl font-bold tracking-tight">Marks Management</h2>
+                <p className="text-muted-foreground">Enter examination scores or track overall academic performance.</p>
+            </div>
 
-            <Paper sx={{ mb: 3 }}>
-                <Tabs value={tabValue} onChange={handleTabChange} indicatorColor="primary" textColor="primary" centered>
-                    <Tab label="Enter Marks (Exams)" />
-                    <Tab label="Exam Report" />
-                    <Tab label="Assignment Grades" />
-                </Tabs>
-            </Paper>
+            <Tabs defaultValue="entry" className="w-full" onValueChange={(v) => {
+                if (v === 'report' && selectedClass) fetchReport(selectedClass);
+                if (v === 'assignment' && selectedClass) fetchAssignmentGrades(selectedClass);
+                if (v === 'entry' && selectedClass && selectedExam && selectedSubject) fetchStudentsAndMarks(selectedClass, selectedExam, selectedSubject);
+            }}>
+                <TabsList className="grid w-full grid-cols-3 max-w-[600px] mb-8">
+                    <TabsTrigger value="entry">Exam Entry</TabsTrigger>
+                    <TabsTrigger value="report">Class Report</TabsTrigger>
+                    <TabsTrigger value="assignment">Assignment Grades</TabsTrigger>
+                </TabsList>
 
-            <Paper sx={{ p: 3, mb: 3 }}>
-                <Grid container spacing={2} alignItems="center">
-                    <Grid item xs={12} md={4}>
-                        <FormControl fullWidth>
-                            <InputLabel>Select Class</InputLabel>
-                            <Select
-                                value={selectedClass}
-                                label="Select Class"
-                                onChange={(e) => setSelectedIdClass(e.target.value)}
-                            >
-                                {classes.map((cls) => (
-                                    <MenuItem key={cls.id} value={cls.id}>
-                                        {cls.name}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                    </Grid>
-                    
-                    {tabValue === 0 && (
-                        <>
-                            <Grid item xs={12} md={4}>
-                                <FormControl fullWidth>
-                                    <InputLabel>Select Exam</InputLabel>
-                                    <Select
-                                        value={selectedExam}
-                                        label="Select Exam"
-                                        onChange={(e) => setSelectedExam(e.target.value)}
-                                    >
-                                        {exams.map((exam) => (
-                                            <MenuItem key={exam.id} value={exam.id}>
-                                                {exam.name}
-                                            </MenuItem>
+                <Card className="glass border-none shadow-sm mb-6">
+                    <CardContent className="pt-6">
+                        <div className="grid gap-6 md:grid-cols-3 items-end">
+                            <div className="space-y-2">
+                                <Label>Select Class</Label>
+                                <Select value={selectedClass} onValueChange={(v) => {
+                                    setSelectedIdClass(v);
+                                    setStudents([]);
+                                    setMarksData({});
+                                }}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Choose Class" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {classes.map((cls) => (
+                                            <SelectItem key={cls.id} value={String(cls.id)}>{cls.name}</SelectItem>
                                         ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            
+                            <TabsContent value="entry" className="m-0 contents">
+                                <div className="space-y-2">
+                                    <Label>Select Exam</Label>
+                                    <Select value={selectedExam} onValueChange={setSelectedExam}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Choose Exam" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {exams.map((exam) => (
+                                                <SelectItem key={exam.id} value={String(exam.id)}>{exam.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
                                     </Select>
-                                </FormControl>
-                            </Grid>
-                            <Grid item xs={12} md={4}>
-                                <FormControl fullWidth>
-                                    <InputLabel>Select Subject</InputLabel>
-                                    <Select
-                                        value={selectedSubject}
-                                        label="Select Subject"
-                                        onChange={(e) => setSelectedSubject(e.target.value)}
-                                    >
-                                        {subjects.map((subj) => (
-                                            <MenuItem key={subj.id} value={subj.id}>
-                                                {subj.name} ({subj.code})
-                                            </MenuItem>
-                                        ))}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Select Subject</Label>
+                                    <Select value={selectedSubject} onValueChange={(v) => {
+                                        setSelectedSubject(v);
+                                        if (selectedClass && selectedExam) fetchStudentsAndMarks(selectedClass, selectedExam, v);
+                                    }}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Choose Subject" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {subjects.map((subj) => (
+                                                <SelectItem key={subj.id} value={String(subj.id)}>{subj.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
                                     </Select>
-                                </FormControl>
-                            </Grid>
-                        </>
-                    )}
-                </Grid>
-            </Paper>
+                                </div>
+                            </TabsContent>
+                        </div>
+                    </CardContent>
+                </Card>
 
-            {selectedClass && (
-                <Paper sx={{ p: 3 }}>
-                    {loading ? (
-                        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-                            <CircularProgress />
-                        </Box>
-                    ) : (
-                        <>
-                            {tabValue === 0 ? (
-                                // ENTER MARKS VIEW
-                                <>
-                                    {selectedExam && selectedSubject ? (
-                                        <>
-                                            <TableContainer>
-                                                <Table>
-                                                    <TableHead>
-                                                        <TableRow>
-                                                            <TableCell>Roll No</TableCell>
-                                                            <TableCell>Student Name</TableCell>
-                                                            <TableCell align="center">Score</TableCell>
-                                                            <TableCell align="center">Max Score</TableCell>
-                                                        </TableRow>
-                                                    </TableHead>
-                                                    <TableBody>
-                                                        {students.map((student) => (
-                                                            <TableRow key={student.id}>
-                                                                <TableCell>{student.roll_number}</TableCell>
-                                                                <TableCell>{student.full_name}</TableCell>
-                                                                <TableCell align="center">
-                                                                    <TextField 
-                                                                        type="number" 
-                                                                        size="small"
-                                                                        value={marksData[student.id]?.score || ''}
-                                                                        onChange={(e) => handleScoreChange(student.id, 'score', e.target.value)}
-                                                                        sx={{ width: 100 }}
-                                                                    />
-                                                                </TableCell>
-                                                                <TableCell align="center">
-                                                                    <TextField 
-                                                                        type="number" 
-                                                                        size="small"
-                                                                        value={marksData[student.id]?.max_score || 100}
-                                                                        onChange={(e) => handleScoreChange(student.id, 'max_score', e.target.value)}
-                                                                        sx={{ width: 100 }}
-                                                                    />
-                                                                </TableCell>
-                                                            </TableRow>
-                                                        ))}
-                                                    </TableBody>
-                                                </Table>
-                                            </TableContainer>
-                                            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
-                                                <Button variant="contained" size="large" onClick={handleSubmit}>
-                                                    Save Marks
-                                                </Button>
-                                            </Box>
-                                        </>
-                                    ) : (
-                                        <Typography align="center" color="text.secondary">
-                                            Please select an Exam and Subject to enter marks.
-                                        </Typography>
-                                    )}
-                                </>
-                            ) : tabValue === 1 ? (
-                                // VIEW REPORT VIEW
-                                <TableContainer>
+                {selectedClass ? (
+                    <div className="space-y-6">
+                        <TabsContent value="entry" className="m-0">
+                            {selectedExam && selectedSubject ? (
+                                <Card className="border-none shadow-xl overflow-hidden bg-white">
                                     <Table>
-                                        <TableHead>
-                                            <TableRow>
-                                                <TableCell>Roll No</TableCell>
-                                                <TableCell>Student Name</TableCell>
-                                                <TableCell>Exam</TableCell>
-                                                <TableCell>Subject</TableCell>
-                                                <TableCell align="center">Score</TableCell>
-                                                <TableCell align="center">Percentage</TableCell>
+                                        <TableHeader>
+                                            <TableRow className="bg-muted/30">
+                                                <TableHead className="pl-6">Roll No</TableHead>
+                                                <TableHead>Student Name</TableHead>
+                                                <TableHead className="text-center">Score</TableHead>
+                                                <TableHead className="text-center">Max Score</TableHead>
                                             </TableRow>
-                                        </TableHead>
+                                        </TableHeader>
                                         <TableBody>
-                                            {reportData.map((row, index) => (
-                                                <TableRow key={index} hover>
-                                                    <TableCell>{row.roll_number}</TableCell>
-                                                    <TableCell>{row.student_name}</TableCell>
-                                                    <TableCell>{row.exam_name}</TableCell>
-                                                    <TableCell>{row.subject}</TableCell>
-                                                    <TableCell align="center">
-                                                        {row.score} / {row.max_score}
+                                            {loading ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={4} className="h-48 text-center">
+                                                        <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-600 mb-2" />
+                                                        <p className="text-muted-foreground">Loading records...</p>
                                                     </TableCell>
-                                                    <TableCell align="center" sx={{ fontWeight: 'bold' }}>
-                                                        {row.percentage}%
+                                                </TableRow>
+                                            ) : students.map((student) => (
+                                                <TableRow key={student.id} className="hover:bg-gray-50/50">
+                                                    <TableCell className="pl-6 font-mono text-xs">{student.roll_number}</TableCell>
+                                                    <TableCell className="font-semibold">{student.full_name}</TableCell>
+                                                    <TableCell className="text-center">
+                                                        <Input 
+                                                            type="number" 
+                                                            className="w-24 mx-auto text-center"
+                                                            value={marksData[student.id]?.score || ''}
+                                                            onChange={(e) => handleScoreChange(student.id, 'score', e.target.value)}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="text-center">
+                                                        <Input 
+                                                            type="number" 
+                                                            className="w-24 mx-auto text-center bg-gray-50"
+                                                            value={marksData[student.id]?.max_score || 100}
+                                                            onChange={(e) => handleScoreChange(student.id, 'max_score', e.target.value)}
+                                                        />
                                                     </TableCell>
                                                 </TableRow>
                                             ))}
-                                            {reportData.length === 0 && (
-                                                <TableRow>
-                                                    <TableCell colSpan={6} align="center">No marks recorded for this class.</TableCell>
-                                                </TableRow>
-                                            )}
                                         </TableBody>
                                     </Table>
-                                </TableContainer>
+                                    <div className="p-6 bg-gray-50/50 border-t flex justify-end">
+                                        <Button size="lg" className="bg-blue-600 hover:bg-blue-700 h-12 px-8" onClick={handleSubmit} disabled={loading}>
+                                            {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="mr-2 h-5 w-5" />}
+                                            Save All Marks
+                                        </Button>
+                                    </div>
+                                </Card>
                             ) : (
-                                // ASSIGNMENT GRADES VIEW
-                                <TableContainer>
-                                    <Table>
-                                        <TableHead>
-                                            <TableRow>
-                                                <TableCell>Student Name</TableCell>
-                                                {assignments.map(a => (
-                                                    <TableCell key={a.id} align="center" sx={{ minWidth: 120 }}>
-                                                        {a.title}
-                                                    </TableCell>
-                                                ))}
-                                            </TableRow>
-                                        </TableHead>
-                                        <TableBody>
-                                            {students.map(student => (
-                                                <TableRow key={student.id} hover>
-                                                    <TableCell>{student.full_name}</TableCell>
-                                                    {assignments.map(a => {
-                                                        const sub = assignmentSubmissions.find(s => s.assignment_id === a.id && s.student_id === student.id);
-                                                        return (
-                                                            <TableCell key={a.id} align="center">
-                                                                {sub ? (
-                                                                    <Box>
-                                                                        <Typography variant="body2" fontWeight="bold" color="primary">
-                                                                            {sub.grade !== null ? sub.grade : 'Ungraded'}
-                                                                        </Typography>
-                                                                        {sub.feedback && (
-                                                                            <Typography variant="caption" display="block" color="text.secondary">
-                                                                                {sub.feedback}
-                                                                            </Typography>
-                                                                        )}
-                                                                    </Box>
-                                                                ) : (
-                                                                    <Typography variant="caption" color="text.disabled">No Submission</Typography>
-                                                                )}
-                                                            </TableCell>
-                                                        );
-                                                    })}
-                                                </TableRow>
-                                            ))}
-                                            {students.length === 0 && (
-                                                <TableRow>
-                                                    <TableCell colSpan={assignments.length + 1} align="center">No students found.</TableCell>
-                                                </TableRow>
-                                            )}
-                                        </TableBody>
-                                    </Table>
-                                </TableContainer>
+                                <Card className="flex flex-col items-center justify-center py-24 bg-gray-50/50 border-dashed border-2">
+                                    <Award size={48} className="text-muted-foreground opacity-20 mb-4" />
+                                    <p className="text-muted-foreground font-medium text-lg text-center">
+                                        Select an exam and subject to begin data entry.
+                                    </p>
+                                </Card>
                             )}
-                        </>
-                    )}
-                </Paper>
-            )}
-        </Box>
+                        </TabsContent>
+
+                        <TabsContent value="report" className="m-0">
+                            <Card className="border-none shadow-xl overflow-hidden bg-white">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow className="bg-muted/30">
+                                            <TableHead className="pl-6">Roll No</TableHead>
+                                            <TableHead>Student Name</TableHead>
+                                            <TableHead>Exam</TableHead>
+                                            <TableHead>Subject</TableHead>
+                                            <TableHead className="text-center">Score</TableHead>
+                                            <TableHead className="text-right pr-6">Grade %</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {reportData.map((row, index) => (
+                                            <TableRow key={index} className="hover:bg-gray-50/50">
+                                                <TableCell className="pl-6 font-mono text-xs">{row.roll_number}</TableCell>
+                                                <TableCell className="font-semibold">{row.student_name}</TableCell>
+                                                <TableCell className="text-sm">{row.exam_name}</TableCell>
+                                                <TableCell className="text-sm">{row.subject}</TableCell>
+                                                <TableCell className="text-center font-medium">
+                                                    {row.score} <span className="text-muted-foreground text-xs">/ {row.max_score}</span>
+                                                </TableCell>
+                                                <TableCell className="text-right pr-6">
+                                                    <Badge variant="secondary" className={cn(
+                                                        "font-bold",
+                                                        row.percentage < 40 ? "text-red-600 bg-red-50" : "text-emerald-600 bg-emerald-50"
+                                                    )}>
+                                                        {row.percentage}%
+                                                    </Badge>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                        {reportData.length === 0 && (
+                                            <TableRow>
+                                                <TableCell colSpan={6} className="h-48 text-center text-muted-foreground italic">
+                                                    No results found for this class.
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </Card>
+                        </TabsContent>
+
+                        <TabsContent value="assignment" className="m-0">
+                            <Card className="border-none shadow-xl overflow-hidden bg-white overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow className="bg-muted/30">
+                                            <TableHead className="pl-6 sticky left-0 bg-white z-10">Student Name</TableHead>
+                                            {assignments.map(a => (
+                                                <TableHead key={a.id} className="text-center min-w-[150px]">{a.title}</TableHead>
+                                            ))}
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {students.map(student => (
+                                            <TableRow key={student.id} className="hover:bg-gray-50/50">
+                                                <TableCell className="pl-6 font-semibold sticky left-0 bg-white z-10 border-r shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
+                                                    {student.full_name}
+                                                </TableCell>
+                                                {assignments.map(a => {
+                                                    const sub = assignmentSubmissions.find(s => String(s.assignment_id) === String(a.id) && String(s.student_id) === String(student.id));
+                                                    return (
+                                                        <TableCell key={a.id} className="text-center">
+                                                            {sub ? (
+                                                                <div className="space-y-1">
+                                                                    <Badge className="bg-blue-600 font-bold">
+                                                                        {sub.grade !== null ? sub.grade : 'Pending'}
+                                                                    </Badge>
+                                                                    {sub.feedback && (
+                                                                        <p className="text-[10px] text-muted-foreground truncate max-w-[120px] mx-auto" title={sub.feedback}>
+                                                                            {sub.feedback}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-xs text-muted-foreground italic opacity-50">No Sub.</span>
+                                                            )}
+                                                        </TableCell>
+                                                    );
+                                                })}
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </Card>
+                        </TabsContent>
+                    </div>
+                ) : (
+                    <Card className="flex flex-col items-center justify-center py-24 bg-gray-50/50 border-dashed border-2">
+                        <Filter size={48} className="text-muted-foreground opacity-20 mb-4" />
+                        <p className="text-muted-foreground font-medium text-lg text-center">
+                            Please select a class to view or manage marks.
+                        </p>
+                    </Card>
+                )}
+            </Tabs>
+        </div>
     );
 };
 

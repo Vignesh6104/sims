@@ -15,13 +15,6 @@ import tempfile # Import tempfile
 
 router = APIRouter()
 
-# Initialize Cloudinary
-cloudinary.config(
-    cloud_name=settings.CLOUDINARY_CLOUD_NAME,
-    api_key=settings.CLOUDINARY_API_KEY,
-    api_secret=settings.CLOUDINARY_API_SECRET
-)
-
 @router.get("/class/{class_id}", response_model=List[Assignment])
 def read_class_assignments(
     class_id: str,
@@ -71,12 +64,14 @@ async def submit_assignment(
             
         upload_result = cloudinary.uploader.upload(
             temp_file_path, 
-            folder="sims_assignments", # Optional: organize uploads in a folder
-            resource_type="auto" # Auto-detect type (image, video, raw)
+            folder="sims_assignments",
+            resource_type="auto"
         )
-        file_url = upload_result.get("secure_url")
+        file_url = upload_result.get("secure_url") or upload_result.get("url")
         if not file_url:
-            raise HTTPException(status_code=500, detail="Cloudinary upload failed: No secure_url returned")
+            raise HTTPException(status_code=500, detail="Cloudinary upload failed: No URL returned")
+        
+        file_url = str(file_url) # Ensure it's a string
             
     except cloudinary.exceptions.Error as e:
         raise HTTPException(status_code=500, detail=f"Cloudinary upload error: {e}")

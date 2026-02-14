@@ -1,25 +1,41 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-    Box,
-    Button,
-    Paper,
-    Typography,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    TextField,
-    IconButton,
-    Tooltip,
-    MenuItem,
-    Select,
-    FormControl,
-    InputLabel
-} from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
-import { Add as AddIcon, Refresh as RefreshIcon, Edit as EditIcon, Delete as DeleteIcon, CloudUpload as CloudUploadIcon } from '@mui/icons-material';
+    Plus,
+    RefreshCw,
+    Pencil,
+    Trash2,
+    CloudUpload,
+    MoreHorizontal
+} from 'lucide-react';
 import api from '../../api/axios';
-import { useSnackbar } from 'notistack';
+import { useToast } from "@/components/ui/use-toast";
+import { DataTable } from "@/components/ui/data-table";
+import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from '@/lib/utils';
 
 const Students = () => {
     const [students, setStudents] = useState([]);
@@ -37,7 +53,7 @@ const Students = () => {
         address: '',
         class_id: ''
     });
-    const { enqueueSnackbar } = useSnackbar();
+    const { toast } = useToast();
     const fileInputRef = useRef(null);
 
     const fetchStudents = async () => {
@@ -46,7 +62,11 @@ const Students = () => {
             const response = await api.get('/students/');
             setStudents(response.data);
         } catch (error) {
-            enqueueSnackbar('Failed to fetch students', { variant: 'error' });
+            toast({
+                title: "Error",
+                description: "Failed to fetch students",
+                variant: "destructive",
+            });
         } finally {
             setLoading(false);
         }
@@ -90,7 +110,7 @@ const Students = () => {
             roll_number: student.roll_number || '',
             date_of_birth: student.date_of_birth || '',
             address: student.address || '',
-            class_id: student.class_id || ''
+            class_id: student.class_id ? String(student.class_id) : ''
         });
         setOpen(true);
     };
@@ -99,10 +119,17 @@ const Students = () => {
         if (window.confirm('Are you sure you want to delete this student?')) {
             try {
                 await api.delete(`/students/${id}/`);
-                enqueueSnackbar('Student deleted successfully', { variant: 'success' });
+                toast({
+                    title: "Success",
+                    description: "Student deleted successfully",
+                });
                 fetchStudents();
             } catch (error) {
-                enqueueSnackbar('Failed to delete student', { variant: 'error' });
+                toast({
+                    title: "Error",
+                    description: "Failed to delete student",
+                    variant: "destructive",
+                });
             }
         }
     };
@@ -126,15 +153,26 @@ const Students = () => {
                 },
             });
             
-            enqueueSnackbar(response.data.message, { variant: 'success' });
+            toast({
+                title: "Import Success",
+                description: response.data.message,
+            });
             if (response.data.errors && response.data.errors.length > 0) {
                 response.data.errors.forEach(err => {
-                    enqueueSnackbar(err, { variant: 'warning' });
+                    toast({
+                        title: "Warning",
+                        description: err,
+                        variant: "destructive", // Or a warning variant if available
+                    });
                 });
             }
             fetchStudents();
         } catch (error) {
-            enqueueSnackbar(error.response?.data?.detail || 'Import failed', { variant: 'error' });
+            toast({
+                title: "Import Error",
+                description: error.response?.data?.detail || "Import failed",
+                variant: "destructive",
+            });
         } finally {
             setLoading(false);
             event.target.value = null; // Reset input
@@ -147,69 +185,91 @@ const Students = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
+    const handleSelectChange = (name, value) => {
+        setFormData({ ...formData, [name]: value });
+    };
+
     const handleSubmit = async () => {
         try {
             const payload = { ...formData };
-            // Ensure class_id is null if empty string
-            if (payload.class_id === '') payload.class_id = null;
+            if (payload.class_id === '' || payload.class_id === 'none') payload.class_id = null;
             
             if (editMode) {
                 if (!payload.password) delete payload.password;
                 await api.put(`/students/${selectedId}/`, payload);
-                enqueueSnackbar('Student updated successfully', { variant: 'success' });
+                toast({
+                    title: "Success",
+                    description: "Student updated successfully",
+                });
             } else {
                 await api.post('/auth/register/student', payload);
-                enqueueSnackbar('Student added successfully', { variant: 'success' });
+                toast({
+                    title: "Success",
+                    description: "Student added successfully",
+                });
             }
             fetchStudents();
             handleClose();
         } catch (error) {
-            enqueueSnackbar(error.response?.data?.detail || 'Operation failed', { variant: 'error' });
+            toast({
+                title: "Error",
+                description: error.response?.data?.detail || "Operation failed",
+                variant: "destructive",
+            });
         }
     };
 
     const columns = [
-        { field: 'roll_number', headerName: 'Roll No', width: 130 },
-        { field: 'full_name', headerName: 'Name', width: 200 },
-        { field: 'email', headerName: 'Email', width: 250 },
+        { accessorKey: "roll_number", header: "Roll No" },
+        { accessorKey: "full_name", header: "Name" },
+        { accessorKey: "email", header: "Email" },
         { 
-            field: 'class_id', 
-            headerName: 'Class', 
-            width: 150,
-            valueGetter: (params) => {
-                const cls = classes.find(c => c.id === params.row.class_id);
+            accessorKey: "class_id", 
+            header: "Class",
+            cell: ({ row }) => {
+                const cls = classes.find(c => String(c.id) === String(row.original.class_id));
                 return cls ? cls.name : 'N/A';
             }
         },
-        { field: 'address', headerName: 'Address', width: 200 },
+        { accessorKey: "address", header: "Address" },
         {
-            field: 'actions',
-            headerName: 'Actions',
-            width: 150,
-            sortable: false,
-            filterable: false,
-            renderCell: (params) => (
-                <Box onClick={(e) => e.stopPropagation()}>
-                    <Tooltip title="Edit">
-                        <IconButton size="small" color="primary" onClick={() => handleEdit(params.row)}>
-                            <EditIcon />
-                        </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete">
-                        <IconButton size="small" color="error" onClick={() => handleDelete(params.row.id)}>
-                            <DeleteIcon />
-                        </IconButton>
-                    </Tooltip>
-                </Box>
-            )
+            id: "actions",
+            cell: ({ row }) => {
+                const student = row.original;
+                return (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => handleEdit(student)}>
+                                <Pencil className="mr-2 h-4 w-4" /> Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                                onClick={() => handleDelete(student.id)}
+                                className="text-red-600 focus:text-red-600"
+                            >
+                                <Trash2 className="mr-2 h-4 w-4" /> Delete
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                );
+            }
         }
     ];
 
     return (
-        <Box sx={{ height: 600, width: '100%' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="h5" fontWeight="bold">Students Management</Typography>
-                <Box>
+        <div className="space-y-4">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h2 className="text-3xl font-bold tracking-tight">Students Management</h2>
+                    <p className="text-muted-foreground">Manage student enrollments and records.</p>
+                </div>
+                <div className="flex items-center space-x-2">
                     <input
                         type="file"
                         ref={fileInputRef}
@@ -217,144 +277,127 @@ const Students = () => {
                         onChange={handleFileChange}
                         accept=".csv"
                     />
-                    <Button 
-                        startIcon={<CloudUploadIcon />} 
-                        onClick={handleImportClick} 
-                        sx={{ mr: 1 }}
-                        variant="outlined"
-                    >
+                    <Button variant="outline" onClick={handleImportClick} disabled={loading}>
+                        <CloudUpload className="mr-2 h-4 w-4" />
                         Import CSV
                     </Button>
-                    <Button 
-                        startIcon={<RefreshIcon />} 
-                        onClick={fetchStudents} 
-                        sx={{ mr: 1 }}
-                    >
+                    <Button variant="outline" onClick={fetchStudents} disabled={loading}>
+                        <RefreshCw className={cn("mr-2 h-4 w-4", loading && "animate-spin")} />
                         Refresh
                     </Button>
-                    <Button 
-                        variant="contained" 
-                        startIcon={<AddIcon />} 
-                        onClick={handleOpen}
-                    >
+                    <Button onClick={handleOpen}>
+                        <Plus className="mr-2 h-4 w-4" />
                         Add Student
                     </Button>
-                </Box>
-            </Box>
+                </div>
+            </div>
 
-            <Paper sx={{ height: '100%', width: '100%' }}>
-                <DataGrid
-                    rows={students}
-                    columns={columns}
-                    initialState={{
-                        pagination: {
-                            paginationModel: { pageSize: 10 },
-                        },
-                    }}
-                    pageSizeOptions={[10]}
-                    checkboxSelection
-                    disableRowSelectionOnClick
-                    loading={loading}
-                />
-            </Paper>
+            <Card className="glass border-none shadow-none">
+                <CardHeader className="pb-2">
+                    <CardTitle className="text-lg font-medium">Student List</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <DataTable 
+                        columns={columns} 
+                        data={students} 
+                        loading={loading}
+                        searchKey="full_name"
+                    />
+                </CardContent>
+            </Card>
 
-            <Dialog 
-                open={open} 
-                onClose={handleClose}
-                disableEnforceFocus
-                disableAutoFocus
-            >
-                <DialogTitle>{editMode ? 'Edit Student' : 'Add New Student'}</DialogTitle>
-                <DialogContent>
-                    <TextField
-                        autoFocus
-                        margin="dense"
-                        name="full_name"
-                        label="Full Name"
-                        type="text"
-                        fullWidth
-                        variant="outlined"
-                        value={formData.full_name}
-                        onChange={handleChange}
-                    />
-                    <TextField
-                        margin="dense"
-                        name="email"
-                        label="Email Address"
-                        type="email"
-                        fullWidth
-                        variant="outlined"
-                        value={formData.email}
-                        onChange={handleChange}
-                    />
-                    <TextField
-                        margin="dense"
-                        name="password"
-                        label={editMode ? "Password (leave blank to keep)" : "Password"}
-                        type="password"
-                        fullWidth
-                        variant="outlined"
-                        value={formData.password}
-                        onChange={handleChange}
-                    />
-                    <TextField
-                        margin="dense"
-                        name="roll_number"
-                        label="Roll Number"
-                        type="text"
-                        fullWidth
-                        variant="outlined"
-                        value={formData.roll_number}
-                        onChange={handleChange}
-                    />
-                    <TextField
-                        margin="dense"
-                        name="date_of_birth"
-                        label="Date of Birth"
-                        type="date"
-                        fullWidth
-                        variant="outlined"
-                        value={formData.date_of_birth}
-                        onChange={handleChange}
-                        InputLabelProps={{ shrink: true }}
-                    />
-                    <FormControl fullWidth margin="dense">
-                        <InputLabel>Class</InputLabel>
-                        <Select
-                            name="class_id"
-                            value={formData.class_id}
-                            label="Class"
-                            onChange={handleChange}
-                        >
-                            <MenuItem value=""><em>None</em></MenuItem>
-                            {classes.map((cls) => (
-                                <MenuItem key={cls.id} value={cls.id}>
-                                    {cls.name}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                    <TextField
-                        margin="dense"
-                        name="address"
-                        label="Address"
-                        type="text"
-                        fullWidth
-                        variant="outlined"
-                        multiline
-                        rows={2}
-                        value={formData.address}
-                        onChange={handleChange}
-                    />
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>{editMode ? 'Edit Student' : 'Add New Student'}</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-2">
+                        <div className="grid gap-2">
+                            <Label htmlFor="full_name">Full Name</Label>
+                            <Input
+                                id="full_name"
+                                name="full_name"
+                                value={formData.full_name}
+                                onChange={handleChange}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="email">Email Address</Label>
+                            <Input
+                                id="email"
+                                name="email"
+                                type="email"
+                                value={formData.email}
+                                onChange={handleChange}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="password">
+                                {editMode ? "Password (leave blank to keep)" : "Password"}
+                            </Label>
+                            <Input
+                                id="password"
+                                name="password"
+                                type="password"
+                                value={formData.password}
+                                onChange={handleChange}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="roll_number">Roll Number</Label>
+                            <Input
+                                id="roll_number"
+                                name="roll_number"
+                                value={formData.roll_number}
+                                onChange={handleChange}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="date_of_birth">Date of Birth</Label>
+                            <Input
+                                id="date_of_birth"
+                                name="date_of_birth"
+                                type="date"
+                                value={formData.date_of_birth}
+                                onChange={handleChange}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="class_id">Class</Label>
+                            <Select 
+                                value={formData.class_id} 
+                                onValueChange={(value) => handleSelectChange('class_id', value)}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select Class" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">None</SelectItem>
+                                    {classes.map((cls) => (
+                                        <SelectItem key={cls.id} value={String(cls.id)}>
+                                            {cls.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="address">Address</Label>
+                            <Input
+                                id="address"
+                                name="address"
+                                value={formData.address}
+                                onChange={handleChange}
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={handleClose}>Cancel</Button>
+                        <Button onClick={handleSubmit}>{editMode ? 'Update' : 'Add'}</Button>
+                    </DialogFooter>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleClose}>Cancel</Button>
-                    <Button onClick={handleSubmit} variant="contained">
-                        {editMode ? 'Update' : 'Add'}
-                    </Button>
-                </DialogActions>
             </Dialog>
-        </Box>
+        </div>
     );
 };
 

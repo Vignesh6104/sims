@@ -2,25 +2,19 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useForm } from 'react-hook-form';
 import { Link as RouterLink } from 'react-router-dom';
-import {
-    Box,
-    Button,
-    Container,
-    TextField,
-    Typography,
-    Paper,
-    Avatar,
-    Grid,
-    CircularProgress,
-    InputAdornment,
-    IconButton,
-    Link
-} from '@mui/material';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import SchoolIcon from '@mui/icons-material/School';
+import { 
+    Eye, 
+    EyeOff, 
+    Lock, 
+    School, 
+    Loader2 
+} from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const Login = () => {
     const { login } = useAuth();
@@ -34,150 +28,130 @@ const Login = () => {
         setLoading(false);
     };
 
-    const handleClickShowPassword = () => setShowPassword((show) => !show);
+    const togglePasswordVisibility = () => setShowPassword(!showPassword);
 
     return (
-        <Grid container component="main" sx={{ height: '100vh' }}>
-            {/* Left side - Image/Branding */}
-            <Grid
-                item
-                xs={false}
-                sm={4}
-                md={7}
-                sx={{
-                    backgroundImage: 'url(https://source.unsplash.com/random?school)', // Placeholder
-                    backgroundRepeat: 'no-repeat',
-                    backgroundColor: (t) =>
-                        t.palette.mode === 'light' ? t.palette.grey[50] : t.palette.grey[900],
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    position: 'relative'
-                }}
-            >
-                <Box sx={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    backgroundColor: 'rgba(25, 118, 210, 0.8)', // Primary blue overlay
-                }} />
-                <Box sx={{ position: 'relative', zIndex: 1, textAlign: 'center', color: 'white', p: 4 }}>
+        <div className="flex min-h-screen bg-white">
+            {/* Left side - Branding */}
+            <div className="hidden lg:flex lg:w-7/12 relative overflow-hidden bg-blue-600">
+                <div 
+                    className="absolute inset-0 bg-cover bg-center mix-blend-overlay opacity-40"
+                    style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1523050853064-8521a3a24143?q=80&w=2070&auto=format&fit=crop)' }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-700/80 to-blue-900/80" />
+                
+                <div className="relative z-10 flex flex-col items-center justify-center w-full p-12 text-center text-white">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8 }}
                     >
-                        <SchoolIcon sx={{ fontSize: 80, mb: 2 }} />
-                        <Typography component="h1" variant="h2" fontWeight="bold">
+                        <div className="inline-flex items-center justify-center p-4 bg-white/10 backdrop-blur-md rounded-3xl mb-8 border border-white/20">
+                            <School size={80} className="text-white" />
+                        </div>
+                        <h1 className="text-6xl font-extrabold tracking-tight mb-4">
                             School IMS
-                        </Typography>
-                        <Typography variant="h5" sx={{ mt: 2 }}>
-                            Empowering Education through Technology
-                        </Typography>
+                        </h1>
+                        <p className="text-xl font-medium opacity-90 max-w-lg mx-auto">
+                            A complete solution for modern education management and student success.
+                        </p>
                     </motion.div>
-                </Box>
-            </Grid>
+                </div>
+            </div>
 
             {/* Right side - Login Form */}
-            <Grid item xs={12} sm={8} md={5} component={Paper} elevation={6} square sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Box
-                    sx={{
-                        my: 8,
-                        mx: 4,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        maxWidth: 400,
-                        width: '100%'
-                    }}
-                >
-                    <Avatar sx={{ m: 1, bgcolor: 'secondary.main', width: 56, height: 56 }}>
-                        <LockOutlinedIcon fontSize="large" />
-                    </Avatar>
-                    <Typography component="h1" variant="h4" fontWeight="600" color="primary" sx={{ mb: 1 }}>
-                        Welcome Back
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                        Sign in to continue to your dashboard
-                    </Typography>
-                    
-                    <Box component="form" noValidate onSubmit={handleSubmit(onSubmit)} sx={{ mt: 1, width: '100%' }}>
-                        <TextField
-                            margin="normal"
-                            required
-                            fullWidth
-                            id="email"
-                            label="Email Address"
-                            name="email"
-                            autoComplete="email"
-                            autoFocus
-                            {...register("email", { 
-                                required: "Email is required",
-                                pattern: {
-                                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                                    message: "Invalid email address"
-                                }
-                            })}
-                            error={!!errors.email}
-                            helperText={errors.email?.message}
-                        />
-                        <TextField
-                            margin="normal"
-                            required
-                            fullWidth
-                            name="password"
-                            label="Password"
-                            type={showPassword ? 'text' : 'password'}
-                            id="password"
-                            autoComplete="current-password"
-                            {...register("password", { required: "Password is required" })}
-                            error={!!errors.password}
-                            helperText={errors.password?.message}
-                            InputProps={{
-                                endAdornment: (
-                                    <InputAdornment position="end">
-                                        <IconButton
-                                            aria-label="toggle password visibility"
-                                            onClick={handleClickShowPassword}
-                                            edge="end"
-                                        >
-                                            {showPassword ? <VisibilityOff /> : <Visibility />}
-                                        </IconButton>
-                                    </InputAdornment>
-                                )
-                            }}
-                        />
-                        <Button
-                            type="submit"
-                            fullWidth
-                            variant="contained"
-                            size="large"
-                            sx={{ mt: 3, mb: 2, py: 1.5, fontSize: '1rem' }}
+            <div className="flex flex-col justify-center w-full lg:w-5/12 p-8 sm:p-12 lg:p-16">
+                <div className="w-full max-w-md mx-auto space-y-8">
+                    <div className="text-center">
+                        <Avatar className="h-16 w-16 mx-auto mb-4 bg-purple-100 text-purple-600 border-none">
+                            <AvatarFallback className="bg-transparent">
+                                <Lock size={32} />
+                            </AvatarFallback>
+                        </Avatar>
+                        <h2 className="text-3xl font-bold text-gray-900 tracking-tight">
+                            Welcome Back
+                        </h2>
+                        <p className="text-sm text-gray-500 mt-2">
+                            Please enter your credentials to access your dashboard.
+                        </p>
+                    </div>
+
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="email">Email Address</Label>
+                            <Input
+                                id="email"
+                                type="email"
+                                placeholder="name@school.com"
+                                className={errors.email ? "border-red-500" : ""}
+                                {...register("email", { 
+                                    required: "Email is required",
+                                    pattern: {
+                                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                                        message: "Invalid email address"
+                                    }
+                                })}
+                            />
+                            {errors.email && (
+                                <p className="text-xs text-red-500 font-medium">{errors.email.message}</p>
+                            )}
+                        </div>
+
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="password">Password</Label>
+                                <RouterLink 
+                                    to="/forgot-password" 
+                                    className="text-xs font-medium text-blue-600 hover:text-blue-500"
+                                >
+                                    Forgot password?
+                                </RouterLink>
+                            </div>
+                            <div className="relative">
+                                <Input
+                                    id="password"
+                                    type={showPassword ? 'text' : 'password'}
+                                    className={errors.password ? "border-red-500 pr-10" : "pr-10"}
+                                    {...register("password", { required: "Password is required" })}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={togglePasswordVisibility}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                >
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
+                            {errors.password && (
+                                <p className="text-xs text-red-500 font-medium">{errors.password.message}</p>
+                            )}
+                        </div>
+
+                        <Button 
+                            type="submit" 
+                            className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-base font-semibold"
                             disabled={loading}
                         >
-                            {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign In'}
+                            {loading ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Signing in...
+                                </>
+                            ) : (
+                                "Sign In"
+                            )}
                         </Button>
-                        <Grid container>
-                            <Grid item xs>
-                                <Link component={RouterLink} to="/forgot-password" variant="body2">
-                                    Forgot password?
-                                </Link>
-                            </Grid>
-                            <Grid item>
-                                <Link component={RouterLink} to="/about" variant="body2">
-                                    About Us
-                                </Link>
-                            </Grid>
-                        </Grid>
-                    </Box>
-                </Box>
-            </Grid>
-        </Grid>
+                    </form>
+
+                    <div className="text-center text-sm">
+                        <span className="text-gray-500">Need help? </span>
+                        <RouterLink to="/about" className="font-semibold text-blue-600 hover:text-blue-500">
+                            Contact Support
+                        </RouterLink>
+                    </div>
+                </div>
+            </div>
+        </div>
     );
 };
 

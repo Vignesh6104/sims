@@ -7,6 +7,7 @@ class ParentBase(BaseModel):
     email: EmailStr
     full_name: str
     phone_number: Optional[str] = None
+    profile_image: Optional[str] = None
     is_active: bool = True
 
 class ParentCreate(ParentBase):
@@ -16,6 +17,7 @@ class ParentUpdate(ParentBase):
     email: Optional[EmailStr] = None
     full_name: Optional[str] = None
     password: Optional[str] = None
+    profile_image: Optional[str] = None
 
 class ParentInDBBase(ParentBase):
     id: str

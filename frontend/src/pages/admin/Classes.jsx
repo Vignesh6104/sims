@@ -1,25 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Box,
-    Button,
-    Paper,
-    Typography,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    TextField,
-    IconButton,
-    Tooltip,
-    Select,
-    MenuItem,
-    FormControl,
-    InputLabel
-} from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
-import { Add as AddIcon, Refresh as RefreshIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+    Plus,
+    RefreshCw,
+    Pencil,
+    Trash2,
+    MoreHorizontal
+} from 'lucide-react';
 import api from '../../api/axios';
-import { useSnackbar } from 'notistack';
+import { useToast } from "@/components/ui/use-toast";
+import { DataTable } from "@/components/ui/data-table";
+import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from '@/lib/utils';
 
 const Classes = () => {
     const [classes, setClasses] = useState([]);
@@ -32,7 +47,7 @@ const Classes = () => {
         name: '',
         teacher_id: ''
     });
-    const { enqueueSnackbar } = useSnackbar();
+    const { toast } = useToast();
 
     const fetchData = async () => {
         setLoading(true);
@@ -44,7 +59,11 @@ const Classes = () => {
             setClasses(classesRes.data);
             setTeachers(teachersRes.data);
         } catch (error) {
-            enqueueSnackbar('Failed to fetch data', { variant: 'error' });
+            toast({
+                title: "Error",
+                description: "Failed to fetch data",
+                variant: "destructive",
+            });
         } finally {
             setLoading(false);
         }
@@ -65,7 +84,7 @@ const Classes = () => {
         setSelectedId(cls.id);
         setFormData({
             name: cls.name,
-            teacher_id: cls.teacher_id || ''
+            teacher_id: cls.teacher_id ? String(cls.teacher_id) : ''
         });
         setOpen(true);
     };
@@ -74,10 +93,17 @@ const Classes = () => {
         if (window.confirm('Are you sure you want to delete this class?')) {
             try {
                 await api.delete(`/class_rooms/${id}/`);
-                enqueueSnackbar('Class deleted successfully', { variant: 'success' });
+                toast({
+                    title: "Success",
+                    description: "Class deleted successfully",
+                });
                 fetchData();
             } catch (error) {
-                enqueueSnackbar('Failed to delete class', { variant: 'error' });
+                toast({
+                    title: "Error",
+                    description: "Failed to delete class",
+                    variant: "destructive",
+                });
             }
         }
     };
@@ -88,136 +114,155 @@ const Classes = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
+    const handleSelectChange = (name, value) => {
+        setFormData({ ...formData, [name]: value });
+    };
+
     const handleSubmit = async () => {
         try {
             const payload = { ...formData };
-            if (payload.teacher_id === '') payload.teacher_id = null;
+            if (payload.teacher_id === '' || payload.teacher_id === 'none') payload.teacher_id = null;
 
             if (editMode) {
                 await api.put(`/class_rooms/${selectedId}/`, payload);
-                enqueueSnackbar('Class updated successfully', { variant: 'success' });
+                toast({
+                    title: "Success",
+                    description: "Class updated successfully",
+                });
             } else {
                 await api.post('/class_rooms/', payload);
-                enqueueSnackbar('Class added successfully', { variant: 'success' });
+                toast({
+                    title: "Success",
+                    description: "Class added successfully",
+                });
             }
             fetchData();
             handleClose();
         } catch (error) {
-            enqueueSnackbar(error.response?.data?.detail || 'Operation failed', { variant: 'error' });
+            toast({
+                title: "Error",
+                description: error.response?.data?.detail || "Operation failed",
+                variant: "destructive",
+            });
         }
     };
 
     const columns = [
-        { field: 'name', headerName: 'Class Name', width: 200 },
+        { accessorKey: "name", header: "Class Name" },
         { 
-            field: 'teacher_id', 
-            headerName: 'Class Teacher', 
-            width: 250,
-            valueGetter: (params) => {
-                const teacher = teachers.find(t => t.id === params.row.teacher_id);
+            accessorKey: "teacher_id", 
+            header: "Class Teacher",
+            cell: ({ row }) => {
+                const teacher = teachers.find(t => String(t.id) === String(row.original.teacher_id));
                 return teacher ? teacher.full_name : 'Not Assigned';
             }
         },
         {
-            field: 'actions',
-            headerName: 'Actions',
-            width: 150,
-            sortable: false,
-            filterable: false,
-            renderCell: (params) => (
-                <Box onClick={(e) => e.stopPropagation()}>
-                    <Tooltip title="Edit">
-                        <IconButton size="small" color="primary" onClick={() => handleEdit(params.row)}>
-                            <EditIcon />
-                        </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete">
-                        <IconButton size="small" color="error" onClick={() => handleDelete(params.row.id)}>
-                            <DeleteIcon />
-                        </IconButton>
-                    </Tooltip>
-                </Box>
-            )
+            id: "actions",
+            cell: ({ row }) => {
+                const cls = row.original;
+                return (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => handleEdit(cls)}>
+                                <Pencil className="mr-2 h-4 w-4" /> Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                                onClick={() => handleDelete(cls.id)}
+                                className="text-red-600 focus:text-red-600"
+                            >
+                                <Trash2 className="mr-2 h-4 w-4" /> Delete
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                );
+            }
         }
     ];
 
     return (
-        <Box sx={{ height: 600, width: '100%' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="h5" fontWeight="bold">Classes Management</Typography>
-                <Box>
-                    <Button 
-                        startIcon={<RefreshIcon />} 
-                        onClick={fetchData} 
-                        sx={{ mr: 1 }}
-                    >
+        <div className="space-y-4">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h2 className="text-3xl font-bold tracking-tight">Classes Management</h2>
+                    <p className="text-muted-foreground">Manage school classes and assign class teachers.</p>
+                </div>
+                <div className="flex items-center space-x-2">
+                    <Button variant="outline" onClick={fetchData} disabled={loading}>
+                        <RefreshCw className={cn("mr-2 h-4 w-4", loading && "animate-spin")} />
                         Refresh
                     </Button>
-                    <Button 
-                        variant="contained" 
-                        startIcon={<AddIcon />} 
-                        onClick={handleOpen}
-                    >
+                    <Button onClick={handleOpen}>
+                        <Plus className="mr-2 h-4 w-4" />
                         Add Class
                     </Button>
-                </Box>
-            </Box>
+                </div>
+            </div>
 
-            <Paper sx={{ height: '100%', width: '100%' }}>
-                <DataGrid
-                    rows={classes}
-                    columns={columns}
-                    initialState={{
-                        pagination: {
-                            paginationModel: { pageSize: 10 },
-                        },
-                    }}
-                    pageSizeOptions={[10]}
-                    checkboxSelection
-                    disableRowSelectionOnClick
-                    loading={loading}
-                />
-            </Paper>
-
-            <Dialog open={open} onClose={handleClose}>
-                <DialogTitle>{editMode ? 'Edit Class' : 'Add New Class'}</DialogTitle>
-                <DialogContent>
-                    <TextField
-                        autoFocus
-                        margin="dense"
-                        name="name"
-                        label="Class Name"
-                        type="text"
-                        fullWidth
-                        variant="outlined"
-                        value={formData.name}
-                        onChange={handleChange}
+            <Card className="glass border-none shadow-none">
+                <CardHeader className="pb-2">
+                    <CardTitle className="text-lg font-medium">Class List</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <DataTable 
+                        columns={columns} 
+                        data={classes} 
+                        loading={loading}
+                        searchKey="name"
                     />
-                    <FormControl fullWidth margin="dense">
-                        <InputLabel>Class Teacher</InputLabel>
-                        <Select
-                            name="teacher_id"
-                            value={formData.teacher_id}
-                            label="Class Teacher"
-                            onChange={handleChange}
-                        >
-                            <MenuItem value=""><em>None</em></MenuItem>
-                            {teachers.map((teacher) => (
-                                <MenuItem key={teacher.id} value={teacher.id}>
-                                    {teacher.full_name}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
+                </CardContent>
+            </Card>
+
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>{editMode ? 'Edit Class' : 'Add New Class'}</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="name">Class Name</Label>
+                            <Input
+                                id="name"
+                                name="name"
+                                value={formData.name}
+                                onChange={handleChange}
+                                placeholder="e.g. Grade 10-A"
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="teacher_id">Class Teacher</Label>
+                            <Select 
+                                value={formData.teacher_id} 
+                                onValueChange={(value) => handleSelectChange('teacher_id', value)}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Assign Teacher" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">None</SelectItem>
+                                    {teachers.map((teacher) => (
+                                        <SelectItem key={teacher.id} value={String(teacher.id)}>
+                                            {teacher.full_name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={handleClose}>Cancel</Button>
+                        <Button onClick={handleSubmit}>{editMode ? 'Update' : 'Add'}</Button>
+                    </DialogFooter>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleClose}>Cancel</Button>
-                    <Button onClick={handleSubmit} variant="contained">
-                        {editMode ? 'Update' : 'Add'}
-                    </Button>
-                </DialogActions>
             </Dialog>
-        </Box>
+        </div>
     );
 };
 

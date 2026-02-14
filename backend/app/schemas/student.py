@@ -10,6 +10,7 @@ class StudentBase(BaseModel):
     address: Optional[str] = None
     class_id: Optional[str] = None
     parent_id: Optional[str] = None
+    profile_image: Optional[str] = None
     is_active: Optional[bool] = True
 
 class StudentCreate(StudentBase):
@@ -18,6 +19,7 @@ class StudentCreate(StudentBase):
 class StudentUpdate(StudentBase):
     email: Optional[EmailStr] = None
     password: Optional[str] = None
+    profile_image: Optional[str] = None
 
 class StudentInDBBase(StudentBase):
     id: str

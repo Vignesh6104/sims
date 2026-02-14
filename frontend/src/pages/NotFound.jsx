@@ -1,35 +1,27 @@
 import React from 'react';
-import { Box, Typography, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { Button } from "@/components/ui/button";
+import { AlertCircle, Home } from 'lucide-react';
 
 const NotFound = () => {
     const navigate = useNavigate();
 
     return (
-        <Box
-            sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                flexDirection: 'column',
-                minHeight: '100vh',
-                backgroundColor: 'primary.main',
-            }}
-        >
-            <Typography variant="h1" style={{ color: 'white' }}>
-                404
-            </Typography>
-            <Typography variant="h6" style={{ color: 'white' }}>
-                The page you’re looking for doesn’t exist.
-            </Typography>
+        <div className="flex flex-col items-center justify-center min-h-screen bg-blue-600 text-white p-4">
+            <AlertCircle size={120} className="mb-8 opacity-20" />
+            <h1 className="text-9xl font-black tracking-tighter mb-4">404</h1>
+            <h2 className="text-2xl font-bold mb-8 text-center max-w-md">
+                The page you’re looking for doesn’t exist or has been moved.
+            </h2>
             <Button
-                variant="contained"
+                size="lg"
                 onClick={() => navigate('/')}
-                sx={{ mt: 2, bgcolor: 'white', color: 'primary.main', '&:hover': { bgcolor: 'grey.100' } }}
+                className="bg-white text-blue-600 hover:bg-gray-100 font-bold h-12 px-8 rounded-full shadow-xl"
             >
-                Back Home
+                <Home className="mr-2 h-5 w-5" />
+                Return to Safety
             </Button>
-        </Box>
+        </div>
     );
 };
 

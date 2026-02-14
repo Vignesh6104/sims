@@ -16,5 +16,6 @@ class Teacher(Base):
     
     qualification = Column(String, nullable=True)
     subject_specialization = Column(String, nullable=True)
+    profile_image = Column(String, nullable=True)
 
     classrooms = relationship("ClassRoom", back_populates="teacher")

@@ -13,6 +13,9 @@ def get_parents(db: Session, skip: int = 0, limit: int = 100):
     return db.query(Parent).offset(skip).limit(limit).all()
 
 def create_parent(db: Session, parent: ParentCreate):
+    """
+    Create a new parent account with hashed password.
+    """
     hashed_password = get_password_hash(parent.password)
     db_parent = Parent(
         email=parent.email,
@@ -26,4 +29,19 @@ def create_parent(db: Session, parent: ParentCreate):
     db.refresh(db_parent)
     return db_parent
 
-# Update parent logic is standard, skipping for brevity unless needed
+def update_parent(db: Session, db_parent: Parent, parent_update: ParentUpdate):
+    """
+    Update parent profile. Automatically hashes password if provided.
+    """
+    update_data = parent_update.model_dump(exclude_unset=True)
+    if "password" in update_data:
+        hashed_password = get_password_hash(update_data["password"])
+        del update_data["password"]
+        db_parent.hashed_password = hashed_password
+        
+    for key, value in update_data.items():
+        setattr(db_parent, key, value)
+    db.add(db_parent)
+    db.commit()
+    db.refresh(db_parent)
+    return db_parent

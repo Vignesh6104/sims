@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from app.models.assignment import Assignment, Submission
+from app.models.student import Student
 from app.schemas.assignment import AssignmentCreate, SubmissionCreate, SubmissionUpdate
 
 def get_assignments_by_class(db: Session, class_id: str):
@@ -16,16 +17,47 @@ def create_assignment(db: Session, assignment: AssignmentCreate):
     return db_assignment
 
 def get_submissions_by_assignment(db: Session, assignment_id: str):
-    return db.query(Submission).filter(Submission.assignment_id == assignment_id).all()
+    """
+    Fetch all submissions for a specific assignment, including student names.
+    Performs a JOIN with the Student table for efficient data retrieval.
+    """
+    results = db.query(Submission, Student.full_name)\
+        .join(Student, Submission.student_id == Student.id)\
+        .filter(Submission.assignment_id == assignment_id)\
+        .all()
+    
+    submissions = []
+    for sub, name in results:
+        sub.student_name = name
+        submissions.append(sub)
+    
+    return submissions
 
 def get_submission_by_student(db: Session, assignment_id: str, student_id: str):
+    """
+    Retrieve a single submission for a specific student and assignment.
+    """
     return db.query(Submission).filter(
         Submission.assignment_id == assignment_id,
         Submission.student_id == student_id
     ).first()
 
 def get_all_submissions_by_student(db: Session, student_id: str):
-    return db.query(Submission).filter(Submission.student_id == student_id).all()
+    """
+    Retrieve all submissions made by a specific student, including their name.
+    Useful for the student's own assignment view.
+    """
+    results = db.query(Submission, Student.full_name)\
+        .join(Student, Submission.student_id == Student.id)\
+        .filter(Submission.student_id == student_id)\
+        .all()
+    
+    submissions = []
+    for sub, name in results:
+        sub.student_name = name
+        submissions.append(sub)
+    
+    return submissions
 
 def create_submission(db: Session, submission: SubmissionCreate):
     db_submission = Submission(**submission.model_dump())

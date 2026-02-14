@@ -6,6 +6,7 @@ class AdminBase(BaseModel):
     full_name: Optional[str] = None
     department: Optional[str] = None
     position: Optional[str] = None
+    profile_image: Optional[str] = None
     is_active: Optional[bool] = True
 
 class AdminCreate(AdminBase):
@@ -14,6 +15,7 @@ class AdminCreate(AdminBase):
 class AdminUpdate(AdminBase):
     email: Optional[EmailStr] = None
     password: Optional[str] = None
+    profile_image: Optional[str] = None
 
 class AdminInDBBase(AdminBase):
     id: str

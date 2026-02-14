@@ -15,3 +15,4 @@ class Admin(Base):
     # Admin specific fields
     department = Column(String, nullable=True)
     position = Column(String, nullable=True)
+    profile_image = Column(String, nullable=True)

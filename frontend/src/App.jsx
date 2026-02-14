@@ -30,6 +30,7 @@ import Calendar from './pages/Calendar';
 import Library from './pages/admin/Library';
 import LibraryCatalog from './pages/LibraryCatalog';
 import ParentDashboard from './pages/ParentDashboard';
+import Profile from './pages/Profile';
 
 // Placeholders for now, will implement later
 const Placeholder = ({ title }) => <h2>{title} Page (Coming Soon)</h2>;
@@ -62,6 +63,7 @@ function App() {
           <Route path="notifications" element={<Notifications />} />
           <Route path="calendar" element={<Calendar />} />
           <Route path="library" element={<Library />} />
+          <Route path="profile" element={<Profile />} />
         </Route>
       </Route>
 
@@ -75,6 +77,7 @@ function App() {
           <Route path="notifications" element={<Notifications />} />
           <Route path="calendar" element={<Calendar />} />
           <Route path="library" element={<LibraryCatalog />} />
+          <Route path="profile" element={<Profile />} />
         </Route>
       </Route>
 
@@ -88,6 +91,7 @@ function App() {
           <Route path="notifications" element={<Notifications />} />
           <Route path="calendar" element={<Calendar />} />
           <Route path="library" element={<LibraryCatalog />} />
+          <Route path="profile" element={<Profile />} />
         </Route>
       </Route>
 
@@ -97,6 +101,7 @@ function App() {
           <Route index element={<ParentDashboard />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="calendar" element={<Calendar />} />
+          <Route path="profile" element={<Profile />} />
         </Route>
       </Route>
 

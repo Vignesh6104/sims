@@ -19,6 +19,7 @@ class Student(Base):
     roll_number = Column(String, index=True)
     date_of_birth = Column(Date, nullable=True)
     address = Column(String, nullable=True)
+    profile_image = Column(String, nullable=True)
 
     classroom = relationship("ClassRoom", back_populates="students")
     parent = relationship("Parent", back_populates="students")

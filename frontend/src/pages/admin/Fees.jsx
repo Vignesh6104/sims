@@ -1,36 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Box,
-    Button,
-    Paper,
-    Typography,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    TextField,
-    Tabs,
-    Tab,
-    Select,
-    MenuItem,
-    FormControl,
-    InputLabel
-} from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
-import { Add as AddIcon } from '@mui/icons-material';
+    Plus,
+    RefreshCw,
+} from 'lucide-react';
 import api from '../../api/axios';
-import { useSnackbar } from 'notistack';
+import { useToast } from "@/components/ui/use-toast";
+import { DataTable } from "@/components/ui/data-table";
+import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from '@/lib/utils';
 
 const Fees = () => {
-    const [tabValue, setTabValue] = useState(0);
     const [structures, setStructures] = useState([]);
     const [classes, setClasses] = useState([]);
-    const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(false);
     const [open, setOpen] = useState(false);
-    const { enqueueSnackbar } = useSnackbar();
+    const { toast } = useToast();
 
-    // Forms
     const [structureForm, setStructureForm] = useState({
         class_id: '',
         academic_year: '2024-2025',
@@ -39,23 +41,14 @@ const Fees = () => {
         due_date: ''
     });
 
-    const [paymentForm, setPaymentForm] = useState({
-        student_id: '',
-        fee_structure_id: '',
-        amount_paid: '',
-        payment_date: new Date().toISOString().split('T')[0],
-        status: 'paid'
-    });
-
     useEffect(() => {
         fetchStructures();
         fetchClasses();
     }, []);
 
-    // Fetch classes for dropdowns
     const fetchClasses = async () => {
         try {
-            const res = await api.get('/class_rooms');
+            const res = await api.get('/class_rooms/');
             setClasses(res.data);
         } catch (error) {
             console.error("Failed to fetch classes");
@@ -74,102 +67,136 @@ const Fees = () => {
         }
     };
 
-    // Fetch students when a class is selected in payment form (Optional enhancement)
-    // For now, simpler approach: fetch all students or type ID? No, fetch all is bad.
-    // Let's implement a simple student fetcher when entering payment tab or have a class selector there too.
-    // Simplified: Just one "Add Structure" feature for now to satisfy requirements. Payment recording is complex UI.
-    // I'll stick to Fee Structure management primarily.
-
     const handleStructureSubmit = async () => {
         try {
             await api.post('/fees/structures', structureForm);
-            enqueueSnackbar('Fee Structure added', { variant: 'success' });
+            toast({
+                title: "Success",
+                description: "Fee Structure added successfully",
+            });
             setOpen(false);
             fetchStructures();
         } catch (error) {
-            enqueueSnackbar('Failed to add structure', { variant: 'error' });
+            toast({
+                title: "Error",
+                description: "Failed to add fee structure",
+                variant: "destructive",
+            });
         }
     };
 
+    const handleSelectChange = (name, value) => {
+        setStructureForm({ ...structureForm, [name]: value });
+    };
+
     const columns = [
-        { field: 'academic_year', headerName: 'Year', width: 120 },
+        { accessorKey: "academic_year", header: "Year" },
         { 
-            field: 'class_id', 
-            headerName: 'Class', 
-            width: 150,
-            valueGetter: (params) => classes.find(c => c.id === params.row.class_id)?.name || params.row.class_id
+            accessorKey: "class_id", 
+            header: "Class",
+            cell: ({ row }) => {
+                const cls = classes.find(c => String(c.id) === String(row.original.class_id));
+                return cls ? cls.name : row.original.class_id;
+            }
         },
-        { field: 'amount', headerName: 'Amount', width: 120 },
-        { field: 'description', headerName: 'Description', width: 200 },
-        { field: 'due_date', headerName: 'Due Date', width: 150 },
+        { accessorKey: "amount", header: "Amount" },
+        { accessorKey: "description", header: "Description" },
+        { accessorKey: "due_date", header: "Due Date" },
     ];
 
     return (
-        <Box sx={{ height: 600, width: '100%' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="h5" fontWeight="bold">Fee Management</Typography>
-                <Button 
-                    variant="contained" 
-                    startIcon={<AddIcon />} 
-                    onClick={() => setOpen(true)}
-                >
-                    Add Fee Structure
-                </Button>
-            </Box>
+        <div className="space-y-4">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h2 className="text-3xl font-bold tracking-tight">Fee Management</h2>
+                    <p className="text-muted-foreground">Configure fee structures and track student payments.</p>
+                </div>
+                <div className="flex items-center space-x-2">
+                    <Button variant="outline" onClick={fetchStructures} disabled={loading}>
+                        <RefreshCw className={cn("mr-2 h-4 w-4", loading && "animate-spin")} />
+                        Refresh
+                    </Button>
+                    <Button onClick={() => setOpen(true)}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add Fee Structure
+                    </Button>
+                </div>
+            </div>
 
-            <Paper sx={{ height: '100%', width: '100%' }}>
-                <DataGrid
-                    rows={structures}
-                    columns={columns}
-                    pageSize={10}
-                    loading={loading}
-                />
-            </Paper>
+            <Card className="glass border-none shadow-none">
+                <CardHeader className="pb-2">
+                    <CardTitle className="text-lg font-medium">Fee Structures</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <DataTable 
+                        columns={columns} 
+                        data={structures} 
+                        loading={loading}
+                        searchKey="description"
+                    />
+                </CardContent>
+            </Card>
 
-            <Dialog open={open} onClose={() => setOpen(false)}>
-                <DialogTitle>Add Fee Structure</DialogTitle>
-                <DialogContent>
-                    <FormControl fullWidth margin="dense">
-                        <InputLabel>Class</InputLabel>
-                        <Select
-                            value={structureForm.class_id}
-                            label="Class"
-                            onChange={(e) => setStructureForm({...structureForm, class_id: e.target.value})}
-                        >
-                            {classes.map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
-                        </Select>
-                    </FormControl>
-                    <TextField
-                        margin="dense"
-                        label="Amount"
-                        type="number"
-                        fullWidth
-                        value={structureForm.amount}
-                        onChange={(e) => setStructureForm({...structureForm, amount: e.target.value})}
-                    />
-                    <TextField
-                        margin="dense"
-                        label="Description"
-                        fullWidth
-                        value={structureForm.description}
-                        onChange={(e) => setStructureForm({...structureForm, description: e.target.value})}
-                    />
-                    <TextField
-                        margin="dense"
-                        label="Due Date"
-                        type="date"
-                        fullWidth
-                        InputLabelProps={{ shrink: true }}
-                        value={structureForm.due_date}
-                        onChange={(e) => setStructureForm({...structureForm, due_date: e.target.value})}
-                    />
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Add Fee Structure</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="class_id">Class</Label>
+                            <Select 
+                                value={String(structureForm.class_id)} 
+                                onValueChange={(value) => handleSelectChange('class_id', value)}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select Class" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {classes.map((c) => (
+                                        <SelectItem key={c.id} value={String(c.id)}>
+                                            {c.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="amount">Amount</Label>
+                            <Input
+                                id="amount"
+                                type="number"
+                                value={structureForm.amount}
+                                onChange={(e) => setStructureForm({...structureForm, amount: e.target.value})}
+                                placeholder="Enter amount"
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="description">Description</Label>
+                            <Input
+                                id="description"
+                                value={structureForm.description}
+                                onChange={(e) => setStructureForm({...structureForm, description: e.target.value})}
+                                placeholder="e.g. Tuition Fee"
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="due_date">Due Date</Label>
+                            <Input
+                                id="due_date"
+                                type="date"
+                                value={structureForm.due_date}
+                                onChange={(e) => setStructureForm({...structureForm, due_date: e.target.value})}
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                        <Button onClick={handleStructureSubmit}>Save Structure</Button>
+                    </DialogFooter>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setOpen(false)}>Cancel</Button>
-                    <Button onClick={handleStructureSubmit} variant="contained">Save</Button>
-                </DialogActions>
             </Dialog>
-        </Box>
+        </div>
     );
 };
 

@@ -1,16 +1,16 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { CircularProgress, Box } from '@mui/material';
+import { Loader2 } from 'lucide-react';
 
 const ProtectedRoute = ({ allowedRoles }) => {
     const { token, role, loading } = useAuth();
 
     if (loading) {
         return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-                <CircularProgress />
-            </Box>
+            <div className="flex items-center justify-center h-screen bg-gray-50/50">
+                <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
+            </div>
         );
     }
 
@@ -19,7 +19,6 @@ const ProtectedRoute = ({ allowedRoles }) => {
     }
 
     if (allowedRoles && !allowedRoles.includes(role)) {
-        // Redirect to their appropriate dashboard if they try to access a wrong one
         if (role === 'admin') return <Navigate to="/admin" replace />;
         if (role === 'teacher') return <Navigate to="/teacher" replace />;
         if (role === 'student') return <Navigate to="/student" replace />;

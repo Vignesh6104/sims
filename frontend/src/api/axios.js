@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1',
-    timeout: 10000, // 10 seconds
+    timeout: 30000, // 30 seconds to handle cold starts
     headers: {
         'Content-Type': 'application/json',
     },
@@ -32,7 +32,7 @@ api.interceptors.response.use(
             if (refreshToken) {
                 try {
                     const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
-                    const response = await axios.post(`${baseUrl}/auth/refresh/`, {
+                    const response = await axios.post(`${baseUrl}/auth/refresh`, {
                         refresh_token: refreshToken
                     });
                     

@@ -1,6 +1,10 @@
-from typing import Any
+from typing import Any, Union
 from datetime import timedelta
-from fastapi import APIRouter, Depends, HTTPException, status
+import os
+import tempfile
+import shutil
+import cloudinary.uploader
+from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Body
 from fastapi.security import OAuth2PasswordRequestForm
 from jose import jwt
 from pydantic import ValidationError
@@ -17,7 +21,118 @@ from app.models.teacher import Teacher
 from app.models.student import Student
 from app.models.parent import Parent
 
+from app.schemas.admin import Admin as AdminSchema, AdminUpdate
+from app.schemas.parent import Parent as ParentSchema, ParentUpdate
+
 router = APIRouter()
+
+# Combine schemas for polymorphic response
+UserSchema = Union[AdminSchema, TeacherSchema, StudentSchema, ParentSchema]
+
+@router.get("/me", response_model=UserSchema)
+def read_user_me(
+    current_user: Any = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Retrieve the profile information of the currently authenticated user.
+    
+    Args:
+        current_user: The authenticated user object injected by the security dependency.
+        
+    Returns:
+        The user object (Admin, Teacher, Student, or Parent) matching the current session.
+    """
+    return current_user
+
+@router.put("/me", response_model=UserSchema)
+def update_user_me(
+    *,
+    db: Session = Depends(deps.get_db),
+    user_in: Any = Body(...),
+    current_user: Any = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Update the profile information for the currently authenticated user.
+    Handles dynamic role detection to update the correct database table.
+    
+    Args:
+        db: Database session.
+        user_in: Dictionary or schema containing the fields to update.
+        current_user: The authenticated user object.
+        
+    Returns:
+        The updated user object.
+        
+    Raises:
+        HTTPException: If the user type is invalid.
+    """
+    update_data = user_in if isinstance(user_in, dict) else user_in.dict(exclude_unset=True)
+    
+    if isinstance(current_user, Admin):
+        from app.crud import crud_admin
+        return crud_admin.update_admin(db, db_admin=current_user, admin_update=AdminUpdate(**update_data))
+    
+    elif isinstance(current_user, Teacher):
+        from app.crud import crud_teacher
+        return crud_teacher.update_teacher(db, db_teacher=current_user, teacher_update=TeacherUpdate(**update_data))
+    
+    elif isinstance(current_user, Student):
+        from app.crud import crud_student
+        from app.schemas.student import StudentUpdate
+        return crud_student.update_student(db, db_student=current_user, student_update=StudentUpdate(**update_data))
+    
+    elif isinstance(current_user, Parent):
+        from app.crud import crud_parent
+        return crud_parent.update_parent(db, db_parent=current_user, parent_update=ParentUpdate(**update_data))
+
+    raise HTTPException(status_code=400, detail="Invalid user type")
+
+@router.put("/me/profile-image", response_model=UserSchema)
+async def update_profile_image(
+    *,
+    db: Session = Depends(deps.get_db),
+    file: UploadFile = File(...),
+    current_user: Any = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Upload and update the profile image for the currently authenticated user.
+    The image is uploaded to Cloudinary, and the secure URL is saved to the database.
+    
+    Args:
+        db: Database session.
+        file: The image file uploaded via multipart form data.
+        current_user: The authenticated user object.
+        
+    Returns:
+        The user object with the updated profile_image URL.
+        
+    Raises:
+        HTTPException: If Cloudinary upload fails.
+    """
+    temp_file_path = None
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as temp_file:
+            shutil.copyfileobj(file.file, temp_file)
+            temp_file_path = temp_file.name
+            
+        upload_result = cloudinary.uploader.upload(
+            temp_file_path, 
+            folder="sims_profiles",
+            resource_type="image"
+        )
+        file_url = upload_result.get("secure_url") or upload_result.get("url")
+        if not file_url:
+            raise HTTPException(status_code=500, detail="Cloudinary upload failed")
+            
+    finally:
+        if temp_file_path and os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
+
+    current_user.profile_image = file_url
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
+    return current_user
 
 @router.post("/login", response_model=Token)
 def login_access_token(

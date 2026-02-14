@@ -1,105 +1,142 @@
-html, body {
-  margin: 0;
-  padding: 0;
-  overflow-x: hidden; /* Prevent horizontal scroll */
-  height: 100%;
+@import "tailwindcss";
+
+@theme {
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+
+  @keyframes accordion-down {
+    from { height: 0; }
+    to { height: var(--radix-accordion-content-height); }
+  }
+  @keyframes accordion-up {
+    from { height: var(--radix-accordion-content-height); }
+    to { height: 0; }
+  }
 }
 
-/* 
-   Aggressively hide any elements injected into the body by extensions 
-   (like bbai-shadow-wrapper) that cause layout issues.
-   Only the #root div and scripts should exist.
-*/
-body > *:not(#root):not(script):not(style) {
-  display: none !important;
-  height: 0 !important;
-  width: 0 !important;
-  overflow: hidden !important;
-  position: absolute !important;
-  top: -9999px !important;
-  left: -9999px !important;
-  z-index: -9999 !important;
-  pointer-events: none !important;
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
+  }
 }
 
-#root {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    
+    background: linear-gradient(to right top, #e0eafc, #cfdef3, #e0eafc);
+    background-size: cover;
+    min-height: 100vh;
+    background-attachment: fixed;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
 }
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  
-  /* Minimal Light Gradient Background */
-  background: linear-gradient(to right top, #e0eafc, #cfdef3, #e0eafc); /* Light, subtle blue/grey gradient */
-  background-size: cover;
-  min-height: 100vh;
-  background-attachment: fixed;
-  backdrop-filter: blur(8px); /* Apply blur to the background */
-  -webkit-backdrop-filter: blur(8px); /* For Safari */
+/* Glassmorphism utility */
+.glass {
+  @apply bg-white/60 backdrop-blur-[15px] border border-white/80 shadow-lg transition-all duration-300;
+  border-right-color: rgba(255, 255, 255, 0.7);
+  border-bottom-color: rgba(255, 255, 255, 0.7);
 }
 
-#root {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+.glass-input {
+  @apply bg-white/80 rounded-lg border border-black/10;
 }
-
-/* Base Glassmorphism effect for elements like Paper, Card */
-.MuiPaper-root, .MuiCard-root {
-  background-color: rgba(255, 255, 255, 0.6) !important; /* More transparent white for light theme */
-  backdrop-filter: blur(15px) !important; /* Clearer blur */
-  -webkit-backdrop-filter: blur(15px) !important; /* For Safari */
-  border: 1px solid rgba(255, 255, 255, 0.8) !important; /* More prominent border */
-  border-right-color: rgba(255, 255, 255, 0.7) !important;
-  border-bottom-color: rgba(255, 255, 255, 0.7) !important;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15) !important; /* Subtle shadow */
-  transition: all 0.3s ease-in-out;
-}
-
-/* Adjustments for inputs */
-.MuiInputBase-root {
-  background-color: rgba(255, 255, 255, 0.8) !important; /* Slightly transparent white */
-  border-radius: 8px !important;
-  border: 1px solid rgba(0, 0, 0, 0.1) !important; /* Soft dark border */
-}
-
-/* Text color for better readability on blurred background */
-.MuiTypography-root, .MuiInputLabel-root, .MuiInputBase-input, .MuiSvgIcon-root {
-  color: #333333 !important; /* Dark grey for text and icons */
-}
-
-.MuiInputLabel-root.Mui-focused {
-  color: #000000 !important; /* Black for focused label */
-}
-
-.MuiOutlinedInput-notchedOutline {
-  border-color: transparent !important; /* Border handled by root */
-}
-
-.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
-  border-color: transparent !important;
-}
-
-.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
-  border-color: transparent !important;
-}
-
-/* Buttons */
-.MuiButton-containedPrimary {
-  background-color: rgba(25, 118, 210, 0.7) !important; /* Primary blue with transparency */
-  color: #ffffff !important;
-  box-shadow: none !important;
-}
-
-.MuiButton-containedPrimary:hover {
-  background-color: rgba(25, 118, 210, 0.9) !important;
-  box-shadow: none !important;
-}
-
-

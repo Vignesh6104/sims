@@ -2,7 +2,7 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import api from '../api/axios';
 import { useNavigate } from 'react-router-dom';
-import { useSnackbar } from 'notistack';
+import { toast } from '@/components/ui/use-toast';
 
 const AuthContext = createContext(null);
 
@@ -11,22 +11,18 @@ export const AuthProvider = ({ children }) => {
     const [role, setRole] = useState(null); // 'admin', 'teacher', 'student'
     const [token, setToken] = useState(localStorage.getItem('token'));
     const [loading, setLoading] = useState(true);
+    const [profileLoading, setProfileLoading] = useState(false);
     const navigate = useNavigate();
-    const { enqueueSnackbar } = useSnackbar();
 
     useEffect(() => {
         if (token) {
             try {
                 const decoded = jwtDecode(token);
-                // Check expiry
-                if (decoded.exp * 1000 < Date.now()) {
-                    // We don't logout immediately, let axios interceptor try to refresh
-                    // But for initial load, if it's expired and refresh fails, then logout
-                    setUser(decoded);
-                    setRole(decoded.role);
-                } else {
-                    setUser(decoded);
-                    setRole(decoded.role);
+                setUser(decoded);
+                setRole(decoded.role);
+                // Fetch full profile only once or when needed
+                if (!profileLoading) {
+                    refreshProfile();
                 }
             } catch (error) {
                 logout();
@@ -35,9 +31,27 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
     }, [token]);
 
+    /**
+     * Re-fetches the full user profile from the server.
+     * Synchronizes the global Auth state with updated database values
+     * (e.g., after updating profile image or full name).
+     */
+    const refreshProfile = async () => {
+        if (profileLoading) return;
+        setProfileLoading(true);
+        try {
+            const res = await api.get('/auth/me');
+            // Merge decoded token data with detailed DB profile
+            setUser(prev => ({ ...prev, ...res.data }));
+        } catch (error) {
+            console.error("Failed to refresh profile", error);
+        } finally {
+            setProfileLoading(false);
+        }
+    };
+
     const login = async (email, password) => {
         try {
-            // Note: Our backend endpoint is /auth/login
             const response = await api.post('/auth/login', new URLSearchParams({
                 username: email,
                 password: password,
@@ -54,7 +68,10 @@ export const AuthProvider = ({ children }) => {
             setUser(decoded);
             setRole(decoded.role);
             
-            enqueueSnackbar('Login successful!', { variant: 'success' });
+            toast({
+                title: "Login Successful",
+                description: `Welcome back, ${decoded.full_name || email}!`,
+            });
             
             // Navigate based on role
             if (decoded.role === 'admin') navigate('/admin');
@@ -65,7 +82,11 @@ export const AuthProvider = ({ children }) => {
             return true;
         } catch (error) {
             console.error(error);
-            enqueueSnackbar(error.response?.data?.detail || 'Login failed', { variant: 'error' });
+            toast({
+                title: "Login Failed",
+                description: error.response?.data?.detail || 'Invalid credentials',
+                variant: "destructive",
+            });
             return false;
         }
     };
@@ -80,7 +101,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, role, token, login, logout, loading }}>
+        <AuthContext.Provider value={{ user, role, token, login, logout, refreshProfile, loading }}>
             {children}
         </AuthContext.Provider>
     );

@@ -1,24 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Box,
-    Paper,
-    Typography,
-    Grid,
-    Card,
-    CardContent,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    CircularProgress,
-    Tab,
-    Tabs,
-    Divider,
-    Chip
-} from '@mui/material';
-import { Person, School, AttachMoney, EventAvailable, Assignment as AssignmentIcon } from '@mui/icons-material';
+    User,
+    School,
+    CreditCard,
+    CalendarCheck,
+    ClipboardList,
+    ChevronDown,
+    Loader2,
+    Info
+} from 'lucide-react';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
+import { 
+    Card, 
+    CardContent, 
+    CardHeader, 
+    CardTitle, 
+    CardDescription 
+} from "@/components/ui/card";
+import { 
+    Select, 
+    SelectContent, 
+    SelectItem, 
+    SelectTrigger, 
+    SelectValue 
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { cn } from '@/lib/utils';
 
 const ParentDashboard = () => {
     const { user } = useAuth();
@@ -31,7 +41,6 @@ const ParentDashboard = () => {
         fees: []
     });
     const [loading, setLoading] = useState(true);
-    const [tabValue, setTabValue] = useState(0);
 
     useEffect(() => {
         const fetchChildren = async () => {
@@ -39,7 +48,7 @@ const ParentDashboard = () => {
                 const response = await api.get('/parents/my-children/');
                 setChildren(response.data);
                 if (response.data.length > 0) {
-                    setSelectedChildId(response.data[0].id);
+                    setSelectedChildId(String(response.data[0].id));
                 }
             } catch (error) {
                 console.error("Failed to fetch children");
@@ -56,7 +65,7 @@ const ParentDashboard = () => {
         const fetchChildDetails = async () => {
             setLoading(true);
             try {
-                const selectedChild = children.find(c => c.id === selectedChildId);
+                const selectedChild = children.find(c => String(c.id) === selectedChildId);
                 
                 const [attendanceRes, marksRes, feesRes, assignmentsRes] = await Promise.all([
                    api.get(`/attendance/?student_id=${selectedChildId}`),
@@ -82,154 +91,201 @@ const ParentDashboard = () => {
         fetchChildDetails();
     }, [selectedChildId, children]);
 
-    const handleChildChange = (event) => {
-        setSelectedChildId(event.target.value);
+    const handleChildChange = (value) => {
+        setSelectedChildId(value);
     };
 
-    const selectedChild = children.find(c => c.id === selectedChildId);
+    const selectedChild = children.find(c => String(c.id) === selectedChildId);
 
-    if (loading && children.length === 0) return <CircularProgress />;
+    if (loading && children.length === 0) return (
+        <div className="flex flex-col items-center justify-center h-[80vh] space-y-4">
+            <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
+            <p className="text-muted-foreground font-medium">Connecting to your records...</p>
+        </div>
+    );
 
     return (
-        <Box>
-             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Typography variant="h4" fontWeight="bold">Parent Dashboard</Typography>
+        <div className="space-y-8 animate-in fade-in duration-500">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h2 className="text-3xl font-bold tracking-tight">Parent Dashboard</h2>
+                    <p className="text-muted-foreground">Monitor your child's academic progress and attendance.</p>
+                </div>
                 
                 {children.length > 0 && (
-                    <FormControl sx={{ minWidth: 200 }}>
-                        <InputLabel>Select Child</InputLabel>
-                        <Select
-                            value={selectedChildId}
-                            label="Select Child"
-                            onChange={handleChildChange}
-                        >
-                            {children.map((child) => (
-                                <MenuItem key={child.id} value={child.id}>
-                                    {child.full_name} ({child.roll_number})
-                                </MenuItem>
-                            ))}
+                    <div className="w-full sm:w-[250px]">
+                        <Select value={selectedChildId} onValueChange={handleChildChange}>
+                            <SelectTrigger className="glass">
+                                <SelectValue placeholder="Select Child" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {children.map((child) => (
+                                    <SelectItem key={child.id} value={String(child.id)}>
+                                        {child.full_name} ({child.roll_number})
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
                         </Select>
-                    </FormControl>
+                    </div>
                 )}
-            </Box>
+            </div>
 
             {!selectedChild ? (
-                <Typography>No students linked to your account.</Typography>
+                <Card className="p-12 text-center bg-gray-50/50 border-dashed border-2">
+                    <Info size={48} className="mx-auto text-muted-foreground opacity-20 mb-4" />
+                    <p className="text-lg font-medium text-muted-foreground">No students linked to your account.</p>
+                </Card>
             ) : (
-                <>
-                     <Grid container spacing={3} sx={{ mb: 4 }}>
-                        <Grid item xs={12} sm={4}>
-                            <Card>
-                                <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
-                                    <Person color="primary" sx={{ fontSize: 40, mr: 2 }} />
-                                    <Box>
-                                        <Typography color="text.secondary">Student Name</Typography>
-                                        <Typography variant="h6">{selectedChild.full_name}</Typography>
-                                    </Box>
-                                </CardContent>
-                            </Card>
-                        </Grid>
-                         <Grid item xs={12} sm={4}>
-                            <Card>
-                                <CardContent sx={{ display: 'flex', alignItems: 'center' }}>
-                                    <School color="secondary" sx={{ fontSize: 40, mr: 2 }} />
-                                    <Box>
-                                        <Typography color="text.secondary">Class</Typography>
-                                        <Typography variant="h6">{selectedChild.class_id || 'N/A'}</Typography>
-                                    </Box>
-                                </CardContent>
-                            </Card>
-                        </Grid>
-                    </Grid>
+                <div className="space-y-8">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <Card className="glass border-none shadow-sm">
+                            <CardContent className="p-6 flex items-center gap-4">
+                                <div className="p-4 bg-blue-100 text-blue-600 rounded-2xl shadow-sm">
+                                    <User size={24} />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-1">Student Name</p>
+                                    <h3 className="text-xl font-bold text-blue-900">{selectedChild.full_name}</h3>
+                                </div>
+                            </CardContent>
+                        </Card>
+                        <Card className="glass border-none shadow-sm">
+                            <CardContent className="p-6 flex items-center gap-4">
+                                <div className="p-4 bg-emerald-100 text-emerald-600 rounded-2xl shadow-sm">
+                                    <School size={24} />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-1">Current Class</p>
+                                    <h3 className="text-xl font-bold text-emerald-900">{selectedChild.class_id || 'N/A'}</h3>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
 
-                    <Paper sx={{ width: '100%' }}>
-                        <Tabs value={tabValue} onChange={(e, v) => setTabValue(v)} sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                            <Tab label="Attendance" icon={<EventAvailable />} iconPosition="start" />
-                            <Tab label="Marks" icon={<School />} iconPosition="start" />
-                            <Tab label="Fees" icon={<AttachMoney />} iconPosition="start" />
-                            <Tab label="Assignments" icon={<AssignmentIcon />} iconPosition="start" />
-                        </Tabs>
-                        
-                        <Box sx={{ p: 3 }}>
-                            {tabValue === 0 && (
-                                <Box>
-                                    <Typography variant="h6" gutterBottom>Attendance History</Typography>
-                                    {childData.attendance.length > 0 ? (
-                                        childData.attendance.slice(0, 10).map((att) => (
-                                            <Box key={att.id} sx={{ mb: 1, p: 1, border: '1px solid #eee', borderRadius: 1 }}>
-                                                <Typography variant="subtitle2">{att.date}</Typography>
-                                                <Typography color={att.status === 'present' ? 'success.main' : 'error.main'}>
-                                                    {att.status.toUpperCase()}
-                                                </Typography>
-                                            </Box>
-                                        ))
-                                    ) : <Typography>No attendance records found.</Typography>}
-                                </Box>
-                            )}
-
-                            {tabValue === 1 && (
-                                <Box>
-                                    <Typography variant="h6" gutterBottom>Recent Marks</Typography>
-                                    {childData.marks.length > 0 ? (
-                                        <Grid container spacing={2}>
-                                            {childData.marks.map((mark) => (
-                                                 <Grid item xs={12} sm={6} md={4} key={mark.id}>
-                                                    <Card variant="outlined">
-                                                        <CardContent>
-                                                            <Typography variant="subtitle1" fontWeight="bold">{mark.subject}</Typography>
-                                                            <Typography variant="h5" color="primary">
-                                                                {mark.score} / {mark.max_score}
-                                                            </Typography>
-                                                        </CardContent>
-                                                    </Card>
-                                                 </Grid>
-                                            ))}
-                                        </Grid>
-                                    ) : <Typography>No marks recorded.</Typography>}
-                                </Box>
-                            )}
+                    <Card className="border-none shadow-xl overflow-hidden glass">
+                        <Tabs defaultValue="attendance" className="w-full">
+                            <div className="px-6 pt-6">
+                                <TabsList className="grid w-full grid-cols-4 bg-gray-100/50 p-1">
+                                    <TabsTrigger value="attendance" className="gap-2">
+                                        <CalendarCheck size={16} className="hidden sm:inline" />
+                                        Attendance
+                                    </TabsTrigger>
+                                    <TabsTrigger value="marks" className="gap-2">
+                                        <TrendingUp size={16} className="hidden sm:inline" />
+                                        Marks
+                                    </TabsTrigger>
+                                    <TabsTrigger value="fees" className="gap-2">
+                                        <CreditCard size={16} className="hidden sm:inline" />
+                                        Fees
+                                    </TabsTrigger>
+                                    <TabsTrigger value="assignments" className="gap-2">
+                                        <ClipboardList size={16} className="hidden sm:inline" />
+                                        Assignments
+                                    </TabsTrigger>
+                                </TabsList>
+                            </div>
                             
-                            {tabValue === 2 && (
-                                <Box>
-                                    <Typography variant="h6" gutterBottom>Fee Status</Typography>
-                                     {childData.fees.length > 0 ? (
-                                        childData.fees.map((fee) => (
-                                            <Box key={fee.id} sx={{ mb: 2, p: 2, border: '1px solid #eee', borderRadius: 1, display: 'flex', justifyContent: 'space-between' }}>
-                                                <Box>
-                                                    <Typography fontWeight="bold">Amount: ${fee.amount}</Typography>
-                                                    <Typography variant="caption">Due: {fee.due_date}</Typography>
-                                                </Box>
-                                                <Chip 
-                                                    label={fee.status} 
-                                                    color={fee.status === 'paid' ? 'success' : 'warning'} 
-                                                />
-                                            </Box>
-                                        ))
-                                    ) : <Typography>No fee records found.</Typography>}
-                                </Box>
-                            )}
+                            <div className="p-6">
+                                <TabsContent value="attendance" className="mt-0 space-y-4">
+                                    <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                                        Recent Attendance History
+                                    </h3>
+                                    {childData.attendance.length > 0 ? (
+                                        <div className="grid gap-2">
+                                            {childData.attendance.slice(0, 10).map((att) => (
+                                                <div key={att.id} className="flex items-center justify-between p-4 bg-white/60 border border-white/80 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                                                    <span className="font-semibold text-gray-700">{new Date(att.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                                                    <Badge variant={att.status === 'present' ? 'default' : 'destructive'} className={cn(
+                                                        "px-3 py-1 uppercase tracking-tighter font-bold",
+                                                        att.status === 'present' ? "bg-emerald-500 hover:bg-emerald-600" : "bg-red-500 hover:bg-red-600"
+                                                    )}>
+                                                        {att.status}
+                                                    </Badge>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : <p className="text-center py-10 text-muted-foreground italic">No attendance records found.</p>}
+                                </TabsContent>
 
-                            {tabValue === 3 && (
-                                <Box>
-                                    <Typography variant="h6" gutterBottom>Class Assignments</Typography>
+                                <TabsContent value="marks" className="mt-0">
+                                    <h3 className="text-lg font-bold mb-4">Academic Results</h3>
+                                    {childData.marks.length > 0 ? (
+                                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                            {childData.marks.map((mark) => (
+                                                <Card key={mark.id} className="bg-white border-none shadow-sm group hover:ring-2 hover:ring-blue-100 transition-all">
+                                                    <CardContent className="p-6">
+                                                        <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-2">{mark.subject}</p>
+                                                        <div className="flex items-baseline gap-1">
+                                                            <span className="text-3xl font-extrabold text-blue-600">{mark.score}</span>
+                                                            <span className="text-lg font-medium text-gray-300">/ {mark.max_score}</span>
+                                                        </div>
+                                                        <div className="mt-4 w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                                                            <div 
+                                                                className="bg-blue-600 h-full rounded-full transition-all duration-1000" 
+                                                                style={{ width: `${(mark.score / mark.max_score) * 100}%` }}
+                                                            />
+                                                        </div>
+                                                    </CardContent>
+                                                </Card>
+                                            ))}
+                                        </div>
+                                    ) : <p className="text-center py-10 text-muted-foreground italic">No marks recorded yet.</p>}
+                                </TabsContent>
+                                
+                                <TabsContent value="fees" className="mt-0">
+                                    <h3 className="text-lg font-bold mb-4">Fee Payment Status</h3>
+                                    {childData.fees.length > 0 ? (
+                                        <div className="space-y-3">
+                                            {childData.fees.map((fee) => (
+                                                <div key={fee.id} className="flex items-center justify-between p-4 bg-white/60 border border-white/80 rounded-xl">
+                                                    <div>
+                                                        <p className="font-bold text-gray-800 text-lg">Amount: ${fee.amount}</p>
+                                                        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                                                            <Clock size={12} />
+                                                            Due Date: {fee.due_date}
+                                                        </p>
+                                                    </div>
+                                                    <Badge className={cn(
+                                                        "px-4 py-1 font-bold",
+                                                        fee.status === 'paid' ? "bg-emerald-500" : "bg-amber-500"
+                                                    )}>
+                                                        {fee.status.toUpperCase()}
+                                                    </Badge>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : <p className="text-center py-10 text-muted-foreground italic">No fee records found.</p>}
+                                </TabsContent>
+
+                                <TabsContent value="assignments" className="mt-0">
+                                    <h3 className="text-lg font-bold mb-4">Classroom Assignments</h3>
                                     {childData.assignments.length > 0 ? (
-                                        childData.assignments.map((assignment) => (
-                                            <Box key={assignment.id} sx={{ mb: 2, p: 2, border: '1px solid #eee', borderRadius: 1 }}>
-                                                <Typography variant="subtitle1" fontWeight="bold">{assignment.title}</Typography>
-                                                <Typography variant="body2">{assignment.description}</Typography>
-                                                <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                                                    Due Date: {assignment.due_date}
-                                                </Typography>
-                                            </Box>
-                                        ))
-                                    ) : <Typography>No assignments found for this class.</Typography>}
-                                </Box>
-                            )}
-                        </Box>
-                    </Paper>
-                </>
+                                        <div className="grid gap-4">
+                                            {childData.assignments.map((assignment) => (
+                                                <Card key={assignment.id} className="bg-white border-none shadow-sm hover:shadow-md transition-shadow">
+                                                    <CardContent className="p-6">
+                                                        <div className="flex justify-between items-start gap-4">
+                                                            <div>
+                                                                <h4 className="text-lg font-bold text-gray-800 mb-2">{assignment.title}</h4>
+                                                                <p className="text-sm text-gray-600 leading-relaxed mb-4">{assignment.description}</p>
+                                                                <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-100 gap-2">
+                                                                    <Clock size={12} />
+                                                                    Due: {assignment.due_date}
+                                                                </Badge>
+                                                            </div>
+                                                        </div>
+                                                    </CardContent>
+                                                </Card>
+                                            ))}
+                                        </div>
+                                    ) : <p className="text-center py-10 text-muted-foreground italic">No active assignments for this class.</p>}
+                                </TabsContent>
+                            </div>
+                        </Tabs>
+                    </Card>
+                </div>
             )}
-        </Box>
+        </div>
     );
 };
 

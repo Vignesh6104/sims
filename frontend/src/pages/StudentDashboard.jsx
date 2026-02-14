@@ -1,57 +1,47 @@
 import React, { useEffect, useState } from 'react';
-import { 
-    Grid, 
-    Paper, 
-    Typography, 
-    Box, 
-    CircularProgress, 
-    Card, 
-    CardContent, 
-    Avatar, 
-    Alert,
-    Stack
-} from '@mui/material';
-import { 
-    EventAvailable, 
-    School, 
-    Assignment, 
-    TrendingUp, 
-    Warning, 
-    CheckCircle,
-    ErrorOutline
-} from '@mui/icons-material';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
+import { 
+    CalendarCheck, 
+    TrendingUp, 
+    BookOpen, 
+    Award,
+    AlertCircle,
+    CheckCircle2,
+    Clock,
+    User,
+    Loader2
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { cn } from '@/lib/utils';
 
 const StatCard = ({ title, value, icon, color, status }) => (
-    <Card sx={{ height: '100%' }}>
-        <CardContent>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Avatar sx={{ bgcolor: `${color}.light`, color: `${color}.main`, width: 56, height: 56 }}>
+    <Card className="glass border-none shadow-sm relative overflow-hidden">
+        <CardContent className="p-6">
+            <div className="flex justify-between items-start mb-4">
+                <div className={cn("p-4 rounded-2xl shadow-sm", color.bg, color.icon)}>
                     {icon}
-                </Avatar>
+                </div>
                 {status && (
-                    <Typography 
-                        variant="caption" 
-                        sx={{ 
-                            color: status === 'Good' ? 'success.main' : status === 'Warning' ? 'warning.main' : 'error.main',
-                            fontWeight: 'bold',
-                            border: 1,
-                            borderColor: 'divider',
-                            px: 1,
-                            borderRadius: 1
-                        }}
-                    >
+                    <Badge variant="outline" className={cn(
+                        "font-bold uppercase tracking-tighter text-[10px]",
+                        status === 'Good' ? "text-emerald-600 border-emerald-200 bg-emerald-50" : 
+                        status === 'Warning' ? "text-amber-600 border-amber-200 bg-amber-50" : 
+                        "text-red-600 border-red-200 bg-red-50"
+                    )}>
                         {status}
-                    </Typography>
+                    </Badge>
                 )}
-            </Box>
-            <Typography color="text.secondary" variant="overline">
-                {title}
-            </Typography>
-            <Typography variant="h4" fontWeight="bold">
-                {value}
-            </Typography>
+            </div>
+            <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-1">
+                    {title}
+                </p>
+                <h3 className="text-3xl font-bold">{value}</h3>
+            </div>
         </CardContent>
     </Card>
 );
@@ -77,104 +67,119 @@ const StudentDashboard = () => {
     }, [user]);
 
     if (loading) return (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
-            <CircularProgress />
-        </Box>
+        <div className="flex flex-col items-center justify-center h-[80vh] space-y-4">
+            <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
+            <p className="text-muted-foreground font-medium">Loading your academic record...</p>
+        </div>
     );
 
-    if (!data) return <Typography color="error">Failed to load data.</Typography>;
+    if (!data) return (
+        <div className="flex flex-col items-center justify-center h-[80vh] text-center p-6">
+            <AlertCircle className="h-12 w-12 text-red-500 opacity-50 mb-4" />
+            <h2 className="text-xl font-bold">Data Unavailable</h2>
+            <p className="text-muted-foreground">We couldn't retrieve your dashboard information.</p>
+        </div>
+    );
 
     return (
-        <Box>
-            <Box sx={{ mb: 4 }}>
-                <Typography variant="h4" fontWeight="bold">
-                    Welcome back, {user?.full_name}
-                </Typography>
-                <Typography variant="subtitle1" color="text.secondary">
-                    Class: {data.classroom.name}
-                </Typography>
-            </Box>
+        <div className="space-y-8 animate-in fade-in duration-500">
+            <div className="flex flex-col space-y-2">
+                <h2 className="text-3xl font-bold tracking-tight">Welcome back, {user?.full_name}</h2>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                    <BookOpen size={18} className="text-blue-600" />
+                    <span className="font-medium">Class: {data.classroom.name}</span>
+                </div>
+            </div>
 
             {/* Alerts Section */}
-            <Stack sx={{ mb: 4 }} spacing={2}>
+            <div className="grid gap-4">
                 {data.alerts.map((alert, index) => (
                     alert && (
-                        <Alert severity={alert.type} key={index} icon={alert.type === 'warning' ? <Warning /> : <CheckCircle />}>
-                            {alert.msg}
+                        <Alert key={index} variant={alert.type === 'warning' ? "destructive" : "default"} className={cn(
+                            "border-none shadow-sm",
+                            alert.type === 'success' ? "bg-emerald-50 text-emerald-900 border-l-4 border-l-emerald-500" : "bg-red-50 text-red-900 border-l-4 border-l-red-500"
+                        )}>
+                            {alert.type === 'warning' ? <AlertCircle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+                            <AlertTitle className="font-bold">{alert.type === 'warning' ? 'Action Required' : 'Success'}</AlertTitle>
+                            <AlertDescription>{alert.msg}</AlertDescription>
                         </Alert>
                     )
                 ))}
-            </Stack>
+            </div>
 
             {/* Overview Cards */}
-            <Grid container spacing={3} sx={{ mb: 4 }}>
-                <Grid item xs={12} sm={6} md={3}>
-                    <StatCard 
-                        title="Attendance" 
-                        value={`${data.attendance.percentage}%`} 
-                        icon={<EventAvailable />} 
-                        color="primary"
-                        status={data.attendance.status}
-                    />
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                    <StatCard 
-                        title="Avg Marks" 
-                        value={`${data.marks.average}`} 
-                        icon={<TrendingUp />} 
-                        color="secondary"
-                    />
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                    <StatCard 
-                        title="Exams Taken" 
-                        value={data.marks.total_exams} 
-                        icon={<Assignment />} 
-                        color="info"
-                    />
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                    <StatCard 
-                        title="Latest Result" 
-                        value={data.marks.latest_result ? data.marks.latest_result.split(' ')[0] : 'N/A'} // Just score
-                        icon={<School />} 
-                        color="success"
-                        status={data.marks.latest_result || 'N/A'}
-                    />
-                </Grid>
-            </Grid>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <StatCard 
+                    title="Attendance" 
+                    value={`${data.attendance.percentage}%`} 
+                    icon={<CalendarCheck size={24} />} 
+                    color={{ bg: 'bg-blue-50', icon: 'text-blue-600' }}
+                    status={data.attendance.status}
+                />
+                <StatCard 
+                    title="Avg Marks" 
+                    value={data.marks.average} 
+                    icon={<TrendingUp size={24} />} 
+                    color={{ bg: 'bg-emerald-50', icon: 'text-emerald-600' }}
+                />
+                <StatCard 
+                    title="Exams Taken" 
+                    value={data.marks.total_exams} 
+                    icon={<Award size={24} />} 
+                    color={{ bg: 'bg-purple-50', icon: 'text-purple-600' }}
+                />
+                <StatCard 
+                    title="Latest Result" 
+                    value={data.marks.latest_result ? data.marks.latest_result.split(' ')[0] : 'N/A'} 
+                    icon={<BookOpen size={24} />} 
+                    color={{ bg: 'bg-amber-50', icon: 'text-amber-600' }}
+                    status={data.marks.latest_result || 'N/A'}
+                />
+            </div>
 
             {/* Quick Summary Panel */}
-            <Paper sx={{ p: 3 }}>
-                <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>Quick Summary</Typography>
-                <Grid container spacing={2}>
-                    <Grid item xs={12} sm={4}>
-                        <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 2 }}>
-                            <Typography variant="caption" color="text.secondary">Last Attendance</Typography>
-                            <Typography variant="body1" fontWeight="medium">
-                                {data.attendance.last_marked ? new Date(data.attendance.last_marked).toLocaleDateString() : 'N/A'}
-                            </Typography>
-                        </Box>
-                    </Grid>
-                    <Grid item xs={12} sm={4}>
-                        <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 2 }}>
-                            <Typography variant="caption" color="text.secondary">Latest Exam</Typography>
-                            <Typography variant="body1" fontWeight="medium">
-                                {data.marks.latest_result || 'N/A'}
-                            </Typography>
-                        </Box>
-                    </Grid>
-                    <Grid item xs={12} sm={4}>
-                        <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 2 }}>
-                            <Typography variant="caption" color="text.secondary">Class Teacher</Typography>
-                            <Typography variant="body1" fontWeight="medium">
-                                Assigned
-                            </Typography>
-                        </Box>
-                    </Grid>
-                </Grid>
-            </Paper>
-        </Box>
+            <Card className="glass border-none shadow-sm overflow-hidden">
+                <CardHeader>
+                    <CardTitle>Quick Summary</CardTitle>
+                    <CardDescription>A brief look at your recent statistics.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid gap-4 sm:grid-cols-3">
+                        <div className="p-4 rounded-2xl bg-white/60 border border-white/80 shadow-inner flex items-center gap-4">
+                            <div className="p-3 bg-blue-100 text-blue-600 rounded-xl">
+                                <Clock size={20} />
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground font-medium uppercase tracking-tighter">Last Attendance</p>
+                                <p className="text-base font-bold text-blue-900">
+                                    {data.attendance.last_marked ? new Date(data.attendance.last_marked).toLocaleDateString() : 'N/A'}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="p-4 rounded-2xl bg-white/60 border border-white/80 shadow-inner flex items-center gap-4">
+                            <div className="p-3 bg-emerald-100 text-emerald-600 rounded-xl">
+                                <TrendingUp size={20} />
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground font-medium uppercase tracking-tighter">Latest Exam</p>
+                                <p className="text-base font-bold text-emerald-900">
+                                    {data.marks.latest_result || 'N/A'}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="p-4 rounded-2xl bg-white/60 border border-white/80 shadow-inner flex items-center gap-4">
+                            <div className="p-3 bg-purple-100 text-purple-600 rounded-xl">
+                                <User size={20} />
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground font-medium uppercase tracking-tighter">Class Teacher</p>
+                                <p className="text-base font-bold text-purple-900">Assigned</p>
+                            </div>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
     );
 };
 

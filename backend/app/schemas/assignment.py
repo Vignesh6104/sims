@@ -53,4 +53,4 @@ class SubmissionInDBBase(SubmissionBase):
         from_attributes = True
 
 class Submission(SubmissionInDBBase):
-    pass
+    student_name: Optional[str] = None

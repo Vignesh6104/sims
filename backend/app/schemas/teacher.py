@@ -6,6 +6,7 @@ class TeacherBase(BaseModel):
     full_name: Optional[str] = None
     qualification: Optional[str] = None
     subject_specialization: Optional[str] = None
+    profile_image: Optional[str] = None
     is_active: Optional[bool] = True
 
 class TeacherCreate(TeacherBase):
@@ -14,6 +15,7 @@ class TeacherCreate(TeacherBase):
 class TeacherUpdate(TeacherBase):
     email: Optional[EmailStr] = None
     password: Optional[str] = None
+    profile_image: Optional[str] = None
 
 class TeacherInDBBase(TeacherBase):
     id: str

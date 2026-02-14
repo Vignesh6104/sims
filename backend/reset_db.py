@@ -24,11 +24,12 @@ def reset_database():
         except Exception as e:
             print(f"Error dropping alembic_version: {e}")
 
-        # If we want to fully wipe, we should probably drop the other tables too
-        # 'admins', 'teachers', 'students', 'classrooms', 'attendance', 'marks', 'subjects', 'exams', 'users' (old)
+        # List of all tables to drop
         tables = [
-            'marks', 'attendance', 'students', 'classrooms', 'teachers', 'admins', 
-            'exams', 'subjects', 'users', 'alembic_version'
+            'marks', 'attendance', 'submissions', 'assignments', 'students', 
+            'classrooms', 'teachers', 'admins', 'exams', 'subjects', 
+            'notifications', 'events', 'borrow_records', 'books', 'parents',
+            'fee_payments', 'fee_structures', 'timetables', 'users', 'alembic_version'
         ]
         
         for table in tables:

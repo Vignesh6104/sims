@@ -1,21 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Box,
-    Button,
-    Paper,
-    Typography,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    TextField,
-    IconButton,
-    Tooltip
-} from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
-import { Add as AddIcon, Refresh as RefreshIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+    Plus,
+    RefreshCw,
+    Pencil,
+    Trash2,
+    MoreHorizontal
+} from 'lucide-react';
 import api from '../../api/axios';
-import { useSnackbar } from 'notistack';
+import { useToast } from "@/components/ui/use-toast";
+import { DataTable } from "@/components/ui/data-table";
+import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from '@/lib/utils';
 
 const Admins = () => {
     const [admins, setAdmins] = useState([]);
@@ -30,7 +42,7 @@ const Admins = () => {
         department: '',
         position: ''
     });
-    const { enqueueSnackbar } = useSnackbar();
+    const { toast } = useToast();
 
     const fetchAdmins = async () => {
         setLoading(true);
@@ -38,7 +50,11 @@ const Admins = () => {
             const response = await api.get('/admins/');
             setAdmins(response.data);
         } catch (error) {
-            enqueueSnackbar('Failed to fetch admins', { variant: 'error' });
+            toast({
+                title: "Error",
+                description: "Failed to fetch admins",
+                variant: "destructive",
+            });
         } finally {
             setLoading(false);
         }
@@ -77,10 +93,17 @@ const Admins = () => {
         if (window.confirm('Are you sure you want to delete this admin?')) {
             try {
                 await api.delete(`/admins/${id}/`);
-                enqueueSnackbar('Admin deleted successfully', { variant: 'success' });
+                toast({
+                    title: "Success",
+                    description: "Admin deleted successfully",
+                });
                 fetchAdmins();
             } catch (error) {
-                enqueueSnackbar(error.response?.data?.detail || 'Failed to delete admin', { variant: 'error' });
+                toast({
+                    title: "Error",
+                    description: error.response?.data?.detail || "Failed to delete admin",
+                    variant: "destructive",
+                });
             }
         }
     };
@@ -98,152 +121,163 @@ const Admins = () => {
                 if (!updateData.password) delete updateData.password;
                 
                 await api.put(`/admins/${selectedId}/`, updateData);
-                enqueueSnackbar('Admin updated successfully', { variant: 'success' });
+                toast({
+                    title: "Success",
+                    description: "Admin updated successfully",
+                });
             } else {
                 await api.post('/admins/', formData);
-                enqueueSnackbar('Admin added successfully', { variant: 'success' });
+                toast({
+                    title: "Success",
+                    description: "Admin added successfully",
+                });
             }
             fetchAdmins();
             handleClose();
         } catch (error) {
-            enqueueSnackbar(error.response?.data?.detail || 'Operation failed', { variant: 'error' });
+            toast({
+                title: "Error",
+                description: error.response?.data?.detail || "Operation failed",
+                variant: "destructive",
+            });
         }
     };
 
     const columns = [
-        { field: 'full_name', headerName: 'Name', width: 200 },
-        { field: 'email', headerName: 'Email', width: 250 },
-        { field: 'department', headerName: 'Department', width: 150 },
-        { field: 'position', headerName: 'Position', width: 180 },
+        { accessorKey: "full_name", header: "Name" },
+        { accessorKey: "email", header: "Email" },
+        { accessorKey: "department", header: "Department" },
+        { accessorKey: "position", header: "Position" },
         {
-            field: 'actions',
-            headerName: 'Actions',
-            width: 150,
-            sortable: false,
-            filterable: false,
-            renderCell: (params) => (
-                <Box onClick={(e) => e.stopPropagation()}>
-                    <Tooltip title="Edit">
-                        <IconButton size="small" color="primary" onClick={() => handleEdit(params.row)}>
-                            <EditIcon />
-                        </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete">
-                        <IconButton size="small" color="error" onClick={() => handleDelete(params.row.id)}>
-                            <DeleteIcon />
-                        </IconButton>
-                    </Tooltip>
-                </Box>
-            )
+            id: "actions",
+            cell: ({ row }) => {
+                const admin = row.original;
+                return (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => handleEdit(admin)}>
+                                <Pencil className="mr-2 h-4 w-4" /> Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                                onClick={() => handleDelete(admin.id)}
+                                className="text-red-600 focus:text-red-600"
+                            >
+                                <Trash2 className="mr-2 h-4 w-4" /> Delete
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                );
+            }
         }
     ];
 
     return (
-        <Box sx={{ height: 600, width: '100%' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="h5" fontWeight="bold">Admins Management</Typography>
-                <Box>
-                    <Button 
-                        startIcon={<RefreshIcon />} 
-                        onClick={fetchAdmins} 
-                        sx={{ mr: 1 }}
-                    >
+        <div className="space-y-4">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h2 className="text-3xl font-bold tracking-tight">Admins Management</h2>
+                    <p className="text-muted-foreground">Manage administrative accounts and their roles.</p>
+                </div>
+                <div className="flex items-center space-x-2">
+                    <Button variant="outline" onClick={fetchAdmins} disabled={loading}>
+                        <RefreshCw className={cn("mr-2 h-4 w-4", loading && "animate-spin")} />
                         Refresh
                     </Button>
-                    <Button 
-                        variant="contained" 
-                        startIcon={<AddIcon />} 
-                        onClick={handleOpen}
-                    >
+                    <Button onClick={handleOpen}>
+                        <Plus className="mr-2 h-4 w-4" />
                         Add Admin
                     </Button>
-                </Box>
-            </Box>
+                </div>
+            </div>
 
-            <Paper sx={{ height: '100%', width: '100%' }}>
-                <DataGrid
-                    rows={admins}
-                    columns={columns}
-                    initialState={{
-                        pagination: {
-                            paginationModel: { pageSize: 10 },
-                        },
-                    }}
-                    pageSizeOptions={[10]}
-                    checkboxSelection
-                    disableRowSelectionOnClick
-                    loading={loading}
-                />
-            </Paper>
+            <Card className="glass border-none shadow-none">
+                <CardHeader className="pb-2">
+                    <CardTitle className="text-lg font-medium">Admin List</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <DataTable 
+                        columns={columns} 
+                        data={admins} 
+                        loading={loading}
+                        searchKey="full_name"
+                    />
+                </CardContent>
+            </Card>
 
-            <Dialog 
-                open={open} 
-                onClose={handleClose}
-                disableEnforceFocus
-                disableAutoFocus
-            >
-                <DialogTitle>{editMode ? 'Edit Admin' : 'Add New Admin'}</DialogTitle>
-                <DialogContent>
-                    <TextField
-                        autoFocus
-                        margin="dense"
-                        name="full_name"
-                        label="Full Name"
-                        type="text"
-                        fullWidth
-                        variant="outlined"
-                        value={formData.full_name}
-                        onChange={handleChange}
-                    />
-                    <TextField
-                        margin="dense"
-                        name="email"
-                        label="Email Address"
-                        type="email"
-                        fullWidth
-                        variant="outlined"
-                        value={formData.email}
-                        onChange={handleChange}
-                    />
-                    <TextField
-                        margin="dense"
-                        name="password"
-                        label={editMode ? "Password (leave blank to keep current)" : "Password"}
-                        type="password"
-                        fullWidth
-                        variant="outlined"
-                        value={formData.password}
-                        onChange={handleChange}
-                    />
-                    <TextField
-                        margin="dense"
-                        name="department"
-                        label="Department"
-                        type="text"
-                        fullWidth
-                        variant="outlined"
-                        value={formData.department}
-                        onChange={handleChange}
-                    />
-                    <TextField
-                        margin="dense"
-                        name="position"
-                        label="Position"
-                        type="text"
-                        fullWidth
-                        variant="outlined"
-                        value={formData.position}
-                        onChange={handleChange}
-                    />
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>{editMode ? 'Edit Admin' : 'Add New Admin'}</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="full_name">Full Name</Label>
+                            <Input
+                                id="full_name"
+                                name="full_name"
+                                value={formData.full_name}
+                                onChange={handleChange}
+                                placeholder="Admin Name"
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="email">Email Address</Label>
+                            <Input
+                                id="email"
+                                name="email"
+                                type="email"
+                                value={formData.email}
+                                onChange={handleChange}
+                                placeholder="admin@example.com"
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="password">
+                                {editMode ? "Password (leave blank to keep current)" : "Password"}
+                            </Label>
+                            <Input
+                                id="password"
+                                name="password"
+                                type="password"
+                                value={formData.password}
+                                onChange={handleChange}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="department">Department</Label>
+                            <Input
+                                id="department"
+                                name="department"
+                                value={formData.department}
+                                onChange={handleChange}
+                                placeholder="IT Department"
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="position">Position</Label>
+                            <Input
+                                id="position"
+                                name="position"
+                                value={formData.position}
+                                onChange={handleChange}
+                                placeholder="System Administrator"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={handleClose}>Cancel</Button>
+                        <Button onClick={handleSubmit}>{editMode ? 'Update' : 'Add'}</Button>
+                    </DialogFooter>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleClose}>Cancel</Button>
-                    <Button onClick={handleSubmit} variant="contained">
-                        {editMode ? 'Update' : 'Add'}
-                    </Button>
-                </DialogActions>
             </Dialog>
-        </Box>
+        </div>
     );
 };
 

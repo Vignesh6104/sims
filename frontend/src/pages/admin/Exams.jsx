@@ -1,21 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Box,
-    Button,
-    Paper,
-    Typography,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    TextField,
-    IconButton,
-    Tooltip
-} from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
-import { Add as AddIcon, Refresh as RefreshIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+    Plus,
+    RefreshCw,
+    Pencil,
+    Trash2,
+    MoreHorizontal
+} from 'lucide-react';
 import api from '../../api/axios';
-import { useSnackbar } from 'notistack';
+import { useToast } from "@/components/ui/use-toast";
+import { DataTable } from "@/components/ui/data-table";
+import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from '@/lib/utils';
 
 const Exams = () => {
     const [exams, setExams] = useState([]);
@@ -27,7 +39,7 @@ const Exams = () => {
         name: '',
         date: ''
     });
-    const { enqueueSnackbar } = useSnackbar();
+    const { toast } = useToast();
 
     const fetchExams = async () => {
         setLoading(true);
@@ -35,7 +47,11 @@ const Exams = () => {
             const response = await api.get('/exams/');
             setExams(response.data);
         } catch (error) {
-            enqueueSnackbar('Failed to fetch exams', { variant: 'error' });
+            toast({
+                title: "Error",
+                description: "Failed to fetch exams",
+                variant: "destructive",
+            });
         } finally {
             setLoading(false);
         }
@@ -65,10 +81,17 @@ const Exams = () => {
         if (window.confirm('Are you sure you want to delete this exam?')) {
             try {
                 await api.delete(`/exams/${id}/`);
-                enqueueSnackbar('Exam deleted successfully', { variant: 'success' });
+                toast({
+                    title: "Success",
+                    description: "Exam deleted successfully",
+                });
                 fetchExams();
             } catch (error) {
-                enqueueSnackbar('Failed to delete exam', { variant: 'error' });
+                toast({
+                    title: "Error",
+                    description: "Failed to delete exam",
+                    variant: "destructive",
+                });
             }
         }
     };
@@ -83,116 +106,128 @@ const Exams = () => {
         try {
             if (editMode) {
                 await api.put(`/exams/${selectedId}/`, formData);
-                enqueueSnackbar('Exam updated successfully', { variant: 'success' });
+                toast({
+                    title: "Success",
+                    description: "Exam updated successfully",
+                });
             } else {
                 await api.post('/exams/', formData);
-                enqueueSnackbar('Exam added successfully', { variant: 'success' });
+                toast({
+                    title: "Success",
+                    description: "Exam added successfully",
+                });
             }
             fetchExams();
             handleClose();
         } catch (error) {
-            enqueueSnackbar(error.response?.data?.detail || 'Operation failed', { variant: 'error' });
+            toast({
+                title: "Error",
+                description: error.response?.data?.detail || "Operation failed",
+                variant: "destructive",
+            });
         }
     };
 
     const columns = [
-        { field: 'name', headerName: 'Exam Name', width: 250 },
-        { field: 'date', headerName: 'Date', width: 150 },
+        { accessorKey: "name", header: "Exam Name" },
+        { accessorKey: "date", header: "Date" },
         {
-            field: 'actions',
-            headerName: 'Actions',
-            width: 150,
-            sortable: false,
-            filterable: false,
-            renderCell: (params) => (
-                <Box onClick={(e) => e.stopPropagation()}>
-                    <Tooltip title="Edit">
-                        <IconButton size="small" color="primary" onClick={() => handleEdit(params.row)}>
-                            <EditIcon />
-                        </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete">
-                        <IconButton size="small" color="error" onClick={() => handleDelete(params.row.id)}>
-                            <DeleteIcon />
-                        </IconButton>
-                    </Tooltip>
-                </Box>
-            )
+            id: "actions",
+            cell: ({ row }) => {
+                const exam = row.original;
+                return (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => handleEdit(exam)}>
+                                <Pencil className="mr-2 h-4 w-4" /> Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                                onClick={() => handleDelete(exam.id)}
+                                className="text-red-600 focus:text-red-600"
+                            >
+                                <Trash2 className="mr-2 h-4 w-4" /> Delete
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                );
+            }
         }
     ];
 
     return (
-        <Box sx={{ height: 600, width: '100%' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="h5" fontWeight="bold">Exams Management</Typography>
-                <Box>
-                    <Button 
-                        startIcon={<RefreshIcon />} 
-                        onClick={fetchExams} 
-                        sx={{ mr: 1 }}
-                    >
+        <div className="space-y-4">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h2 className="text-3xl font-bold tracking-tight">Exams Management</h2>
+                    <p className="text-muted-foreground">Schedule and manage school examination periods.</p>
+                </div>
+                <div className="flex items-center space-x-2">
+                    <Button variant="outline" onClick={fetchExams} disabled={loading}>
+                        <RefreshCw className={cn("mr-2 h-4 w-4", loading && "animate-spin")} />
                         Refresh
                     </Button>
-                    <Button 
-                        variant="contained" 
-                        startIcon={<AddIcon />} 
-                        onClick={handleOpen}
-                    >
+                    <Button onClick={handleOpen}>
+                        <Plus className="mr-2 h-4 w-4" />
                         Add Exam
                     </Button>
-                </Box>
-            </Box>
+                </div>
+            </div>
 
-            <Paper sx={{ height: '100%', width: '100%' }}>
-                <DataGrid
-                    rows={exams}
-                    columns={columns}
-                    initialState={{
-                        pagination: {
-                            paginationModel: { pageSize: 10 },
-                        },
-                    }}
-                    pageSizeOptions={[10]}
-                    checkboxSelection
-                    disableRowSelectionOnClick
-                    loading={loading}
-                />
-            </Paper>
+            <Card className="glass border-none shadow-none">
+                <CardHeader className="pb-2">
+                    <CardTitle className="text-lg font-medium">Exam Schedule</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <DataTable 
+                        columns={columns} 
+                        data={exams} 
+                        loading={loading}
+                        searchKey="name"
+                    />
+                </CardContent>
+            </Card>
 
-            <Dialog open={open} onClose={handleClose}>
-                <DialogTitle>{editMode ? 'Edit Exam' : 'Add New Exam'}</DialogTitle>
-                <DialogContent>
-                    <TextField
-                        autoFocus
-                        margin="dense"
-                        name="name"
-                        label="Exam Name"
-                        type="text"
-                        fullWidth
-                        variant="outlined"
-                        value={formData.name}
-                        onChange={handleChange}
-                    />
-                    <TextField
-                        margin="dense"
-                        name="date"
-                        label="Exam Date"
-                        type="date"
-                        fullWidth
-                        variant="outlined"
-                        value={formData.date}
-                        onChange={handleChange}
-                        InputLabelProps={{ shrink: true }}
-                    />
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>{editMode ? 'Edit Exam' : 'Add New Exam'}</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="name">Exam Name</Label>
+                            <Input
+                                id="name"
+                                name="name"
+                                value={formData.name}
+                                onChange={handleChange}
+                                placeholder="e.g. Final Term Examination"
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="date">Exam Date</Label>
+                            <Input
+                                id="date"
+                                name="date"
+                                type="date"
+                                value={formData.date}
+                                onChange={handleChange}
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={handleClose}>Cancel</Button>
+                        <Button onClick={handleSubmit}>{editMode ? 'Update' : 'Add'}</Button>
+                    </DialogFooter>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleClose}>Cancel</Button>
-                    <Button onClick={handleSubmit} variant="contained">
-                        {editMode ? 'Update' : 'Add'}
-                    </Button>
-                </DialogActions>
             </Dialog>
-        </Box>
+        </div>
     );
 };
 

@@ -1,50 +1,66 @@
 import React, { useState, useEffect } from 'react';
-import {
-    Box,
-    Paper,
-    Typography,
-    Grid,
-    Card,
-    CardContent,
-    Button,
-    Chip,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    TextField
-} from '@mui/material';
+import { 
+    Plus, 
+    FileUp, 
+    CheckCircle2, 
+    ExternalLink, 
+    Clock, 
+    BookOpen,
+    Loader2,
+    Search,
+    ChevronRight,
+    ClipboardList,
+    AlertCircle,
+    FileCheck
+} from 'lucide-react';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
-import { useSnackbar } from 'notistack';
+import { useToast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+    DialogDescription,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { cn } from '@/lib/utils';
 
 const Assignments = () => {
-    const { user } = useAuth(); // Assume user has class_id if properly fetched or we fetch profile
+    const { user } = useAuth();
     const [assignments, setAssignments] = useState([]);
     const [submissions, setSubmissions] = useState([]);
     const [myClassId, setMyClassId] = useState(null);
+    const [loading, setLoading] = useState(true);
     
     const [open, setOpen] = useState(false);
     const [selectedAssignment, setSelectedAssignment] = useState(null);
     const [file, setFile] = useState(null);
     
-    const { enqueueSnackbar } = useSnackbar();
+    const { toast } = useToast();
 
     useEffect(() => {
-        // First fetch student profile to get class_id
         const fetchProfile = async () => {
             try {
                 const res = await api.get(`/students/${user.sub}`);
                 setMyClassId(res.data.class_id);
             } catch (error) {
-                console.error("Failed to fetch profile");
+                console.error("Failed to fetch profile", error);
+                setLoading(false);
             }
         };
         if (user?.sub) fetchProfile();
     }, [user]);
 
     const fetchData = async () => {
-        if (!myClassId) return;
+        if (!myClassId) {
+            setLoading(false);
+            return;
+        }
+        setLoading(true);
         try {
             const [assignRes, subRes] = await Promise.all([
                 api.get(`/assignments/class/${myClassId}`),
@@ -54,6 +70,8 @@ const Assignments = () => {
             setSubmissions(subRes.data);
         } catch (error) {
             console.error("Failed to fetch data");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -63,7 +81,11 @@ const Assignments = () => {
 
     const handleSubmit = async () => {
         if (!file) {
-            enqueueSnackbar('Please select a file to submit', { variant: 'warning' });
+            toast({
+                title: "No file selected",
+                description: "Please select a file to upload.",
+                variant: "destructive",
+            });
             return;
         }
 
@@ -77,12 +99,19 @@ const Assignments = () => {
                     'Content-Type': 'multipart/form-data'
                 }
             });
-            enqueueSnackbar('Assignment submitted successfully', { variant: 'success' });
+            toast({
+                title: "Success",
+                description: "Your work has been submitted successfully!",
+            });
             setOpen(false);
             setFile(null);
-            fetchData(); // Refresh to show submission
+            fetchData();
         } catch (error) {
-            enqueueSnackbar(error.response?.data?.detail || 'Failed to submit', { variant: 'error' });
+            toast({
+                title: "Error",
+                description: error.response?.data?.detail || "Submission failed",
+                variant: "destructive",
+            });
         }
     };
 
@@ -92,130 +121,194 @@ const Assignments = () => {
         setOpen(true);
     };
 
-    const getSubmission = (assignmentId) => {
-        return submissions.find(s => s.assignment_id === assignmentId);
+    const getFullUrl = (content) => {
+        if (!content) return null;
+        const trimmed = content.trim();
+        
+        // 1. If it's already a full absolute URL, return it
+        if (/^https?:\/\//i.test(trimmed)) return trimmed;
+        
+        // 2. If it's a protocol-relative URL
+        if (trimmed.startsWith('//')) return `https:${trimmed}`;
+
+        // 3. Handle Cloudinary paths (often saved as image/upload/... or folder/...)
+        if (trimmed.includes('cloudinary.com') || trimmed.includes('sims_assignments/')) {
+            const cleanPath = trimmed.replace(/^https?:\/\//i, '').replace(/^\/+/, '');
+            if (!cleanPath.startsWith('res.cloudinary.com')) {
+                // If it's just the path, we know your cloud name is dievsawtw
+                return `https://res.cloudinary.com/dievsawtw/${cleanPath.startsWith('image/upload/') ? cleanPath : `image/upload/${cleanPath}`}`;
+            }
+            return `https://${cleanPath}`;
+        }
+
+        // 4. Handle local uploads (starting with /uploads)
+        if (trimmed.startsWith('/')) {
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+            const baseUrl = apiUrl.split('/api/v1')[0];
+            return `${baseUrl}${trimmed}`;
+        }
+        
+        return trimmed;
     };
 
-    return (
-        <Box>
-            <Typography variant="h4" fontWeight="bold" sx={{ mb: 3 }}>
-                My Assignments
-            </Typography>
+    const getSubmission = (assignmentId) => {
+        return submissions.find(s => String(s.assignment_id) === String(assignmentId));
+    };
 
-            <Grid container spacing={3}>
+    if (loading && !assignments.length) return (
+        <div className="flex flex-col items-center justify-center h-[80vh] space-y-4">
+            <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
+            <p className="text-muted-foreground font-medium">Loading your assignments...</p>
+        </div>
+    );
+
+    return (
+        <div className="space-y-8 animate-in fade-in duration-500">
+            <div className="flex flex-col space-y-2">
+                <h2 className="text-3xl font-bold tracking-tight">My Assignments</h2>
+                <p className="text-muted-foreground">Manage your homework, projects, and track your scores.</p>
+            </div>
+
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {assignments.map((assign) => {
                     const submission = getSubmission(assign.id);
                     return (
-                        <Grid item xs={12} md={6} key={assign.id}>
-                            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                                <CardContent sx={{ flexGrow: 1 }}>
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, alignItems: 'start' }}>
-                                        <Typography variant="h6">{assign.title}</Typography>
-                                        <Box sx={{ textAlign: 'right' }}>
-                                            <Chip 
-                                                label={submission ? "Submitted" : "Pending"} 
-                                                color={submission ? "success" : "warning"} 
-                                                size="small" 
-                                                sx={{ mb: 1, display: 'block' }}
-                                            />
-                                            <Typography variant="caption" color="text.secondary">
-                                                Due: {assign.due_date}
-                                            </Typography>
-                                        </Box>
-                                    </Box>
-                                    <Typography color="text.secondary" paragraph variant="body2">
-                                        {assign.description}
-                                    </Typography>
+                        <Card key={assign.id} className="glass border-none shadow-sm flex flex-col hover:shadow-md transition-all duration-300 group">
+                            <CardHeader className="pb-4">
+                                <div className="flex justify-between items-start gap-4 mb-2">
+                                    <Badge className={cn(
+                                        "uppercase tracking-tighter text-[10px] font-bold px-3",
+                                        submission ? "bg-emerald-500" : "bg-amber-500"
+                                    )}>
+                                        {submission ? "Submitted" : "Pending"}
+                                    </Badge>
+                                    <div className="flex items-center text-[10px] font-bold text-muted-foreground uppercase">
+                                        <Clock size={12} className="mr-1" />
+                                        Due: {assign.due_date}
+                                    </div>
+                                </div>
+                                <CardTitle className="text-lg font-bold group-hover:text-blue-600 transition-colors line-clamp-1">
+                                    {assign.title}
+                                </CardTitle>
+                            </CardHeader>
+                            
+                            <CardContent className="flex-1 flex flex-col">
+                                <p className="text-sm text-gray-600 leading-relaxed mb-6 line-clamp-3">
+                                    {assign.description}
+                                </p>
+                                
+                                {submission && (
+                                    <div className="mt-auto mb-6 p-3 rounded-xl bg-blue-50/50 border border-blue-100 flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className="p-1.5 bg-blue-600 rounded-lg text-white">
+                                                <FileCheck size={14} />
+                                            </div>
+                                            <span className="text-[10px] font-bold text-blue-900 uppercase">Grade:</span>
+                                        </div>
+                                        <span className="text-lg font-black text-blue-600">
+                                            {submission.grade !== null ? submission.grade : '--'}
+                                        </span>
+                                    </div>
+                                )}
+
+                                <div className="flex flex-wrap gap-2 mt-auto">
+                                    {!submission || submission.grade === null ? (
+                                        <Button 
+                                            className="bg-blue-600 hover:bg-blue-700 flex-1 h-10 font-bold"
+                                            onClick={() => handleOpenSubmit(assign)}
+                                        >
+                                            <FileUp size={16} className="mr-2" />
+                                            {submission ? "Update Work" : "Submit Now"}
+                                        </Button>
+                                    ) : (
+                                        <Button className="flex-1 h-10 font-bold" disabled variant="secondary">
+                                            <CheckCircle2 size={16} className="mr-2" />
+                                            Finalized
+                                        </Button>
+                                    )}
                                     
                                     {submission && (
-                                        <Box sx={{ mt: 1, mb: 2, p: 1, bgcolor: 'action.hover', borderRadius: 1 }}>
-                                            <Typography variant="caption" fontWeight="bold">Submitted on: {submission.submission_date}</Typography>
-                                            {submission.grade !== null && (
-                                                <Typography variant="body2" color="primary.main" fontWeight="bold">
-                                                    Grade: {submission.grade}
-                                                </Typography>
-                                            )}
-                                        </Box>
+                                        <Button 
+                                            variant="outline" 
+                                            className="h-10 px-3 border-blue-200 text-blue-600 hover:bg-blue-50"
+                                            asChild
+                                        >
+                                            <a href={getFullUrl(submission.content)} target="_blank" rel="noreferrer">
+                                                <ExternalLink size={16} />
+                                            </a>
+                                        </Button>
                                     )}
-
-                                    <Box sx={{ mt: 'auto', display: 'flex', gap: 1 }}>
-                                        {!submission || submission.grade === null ? (
-                                            <Button 
-                                                variant="contained" 
-                                                size="small" 
-                                                onClick={() => handleOpenSubmit(assign)}
-                                            >
-                                                {submission ? "Edit Submission" : "Submit Work"}
-                                            </Button>
-                                        ) : (
-                                            <Button variant="contained" size="small" disabled>
-                                                Finalized
-                                            </Button>
-                                        )}
-                                        
-                                        {submission && (
-                                            <Button 
-                                                variant="outlined" 
-                                                size="small" 
-                                                component="a" 
-                                                href={`http://localhost:8000${submission.content}`} 
-                                                target="_blank"
-                                            >
-                                                View Uploaded
-                                            </Button>
-                                        )}
-                                    </Box>
-                                </CardContent>
-                            </Card>
-                        </Grid>
+                                </div>
+                            </CardContent>
+                        </Card>
                     );
                 })}
+                
                 {assignments.length === 0 && (
-                    <Grid item xs={12}>
-                        <Typography color="text.secondary">No assignments found.</Typography>
-                    </Grid>
+                    <Card className="sm:col-span-2 lg:col-span-3 flex flex-col items-center justify-center py-32 bg-gray-50/50 border-dashed border-2">
+                        <ClipboardList size={64} className="text-muted-foreground opacity-10 mb-4" />
+                        <p className="text-xl font-bold text-muted-foreground">Relax! No assignments yet.</p>
+                        <p className="text-sm text-muted-foreground mt-1 text-center max-w-xs">
+                            Your teachers haven't posted any tasks for your class. Check back later!
+                        </p>
+                    </Card>
                 )}
-            </Grid>
+            </div>
 
-            <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>
-                    {getSubmission(selectedAssignment?.id) ? "Edit Submission" : "Submit Work"}: {selectedAssignment?.title}
-                </DialogTitle>
-                <DialogContent>
-                    <Box sx={{ mt: 2 }}>
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>
+                            {getSubmission(selectedAssignment?.id) ? "Update Submission" : "Hand in Assignment"}
+                        </DialogTitle>
+                        <DialogDescription className="text-blue-600 font-medium">
+                            {selectedAssignment?.title}
+                        </DialogDescription>
+                    </DialogHeader>
+                    
+                    <div className="grid gap-6 py-6">
                         {getSubmission(selectedAssignment?.id) && (
-                            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                                Re-uploading a file will replace your current submission.
-                            </Typography>
+                            <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg flex gap-3">
+                                <AlertCircle className="text-amber-600 shrink-0" size={18} />
+                                <p className="text-xs text-amber-800 leading-tight">
+                                    You already have a submission. Uploading a new file will replace your existing work.
+                                </p>
+                            </div>
                         )}
-                        <Button
-                            variant="outlined"
-                            component="label"
-                            fullWidth
-                            sx={{ p: 4, borderStyle: 'dashed' }}
-                        >
-                            {file ? file.name : "Click to select any file"}
+                        
+                        <div className="flex flex-col items-center justify-center border-2 border-dashed rounded-2xl p-10 bg-gray-50/50 group hover:bg-gray-50 hover:border-blue-400 transition-colors cursor-pointer relative">
                             <input
                                 type="file"
-                                hidden
+                                className="absolute inset-0 opacity-0 cursor-pointer z-10"
                                 onChange={(e) => setFile(e.target.files[0])}
                             />
+                            <div className="p-4 bg-white rounded-2xl shadow-sm mb-4 group-hover:scale-110 transition-transform pointer-events-none">
+                                <FileUp className="text-blue-600" size={32} />
+                            </div>
+                            <p className="text-sm font-bold text-gray-700 pointer-events-none">
+                                {file ? file.name : "Click or drag to select file"}
+                            </p>
+                            {file && (
+                                <p className="text-[10px] text-muted-foreground mt-1 pointer-events-none">
+                                    {(file.size / 1024).toFixed(2)} KB • Ready to upload
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                    
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                        <Button 
+                            className="bg-blue-600 hover:bg-blue-700" 
+                            onClick={handleSubmit} 
+                            disabled={!file}
+                        >
+                            Upload Submission
                         </Button>
-                        {file && (
-                            <Typography variant="caption" display="block" sx={{ mt: 1, textAlign: 'center' }}>
-                                Selected: {file.name} ({(file.size / 1024).toFixed(2)} KB)
-                            </Typography>
-                        )}
-                    </Box>
+                    </DialogFooter>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setOpen(false)}>Cancel</Button>
-                    <Button onClick={handleSubmit} variant="contained" disabled={!file}>
-                        {getSubmission(selectedAssignment?.id) ? "Update Submission" : "Submit"}
-                    </Button>
-                </DialogActions>
             </Dialog>
-        </Box>
+        </div>
     );
 };
 

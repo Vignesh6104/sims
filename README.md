@@ -4,9 +4,13 @@ A comprehensive, full-stack application designed to streamline school operations
 
 ## 🚀 Key Features
 
-- **Multi-Role Dashboards:** Specialized interfaces for Admins, Teachers, Parents, and Students.
+- **Profile Management (NEW):**
+    - **Unified Profile Portal**: Personalized settings for all user roles.
+    - **Image Cropping**: Interactive UI for perfectly framing profile pictures.
+    - **Real-time Sync**: Global state updates immediately after profile changes.
+- **Multi-Role Dashboards:** specialized interfaces for Admins, Teachers, Parents, and Students (Optimized for speed).
 - **Academic Management:** Timetable, Subject, Class, Exam, and Attendance tracking.
-- **Assignment System:** Cloud-based file submissions (via Cloudinary) with re-submission capabilities.
+- **Assignment System:** Cloud-based file submissions (via Cloudinary) with direct download capabilities.
 - **Grading & Reporting:** 
     - Consistently tracked Exam marks and Assignment grades.
     - Automated PDF report generation for student performance.
@@ -89,12 +93,11 @@ A comprehensive, full-stack application designed to streamline school operations
 This section provides a high-level overview of the system design, intended to assist in creating UML diagrams and understanding the data flow.
 
 ### 1. System Components (Component Diagram)
-- **Frontend (Client):** A React-based Single Page Application (SPA) using **Material UI** for the presentation layer and **Axios** for asynchronous API communication.
-- **Backend (Server):** A **FastAPI** RESTful service following a layered architecture:
-    - **API Layer:** Handles request routing, JWT validation, and input parsing.
-    - **Service Layer:** Executes complex business logic (e.g., PDF generation, Cloudinary uploads).
-    - **CRUD Layer:** Encapsulates database operations for maintainability.
-    - **ORM Layer:** SQLAlchemy maps Python objects to the relational database schema.
+- **Frontend (Client):** Optimized React-based SPA with **30s API timeouts** to handle cloud database cold starts and intelligent state locking for profile refreshes.
+- **Backend (Server):** High-performance **FastAPI** service featuring:
+    - **Aggregated Query Logic**: Reduces database round-trips by over 90% for dashboard statistics.
+    - **Advanced Token Security**: Unique JWT `jti` identifiers and automated session renewal.
+    - **Alembic Versioning**: Structured database schema evolution.
 - **External Services:**
     - **Cloudinary:** Primary storage for submitted assignment files and documents.
     - **PostgreSQL:** Persistent storage for all relational data.

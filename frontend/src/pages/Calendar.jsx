@@ -6,11 +6,34 @@ import startOfWeek from 'date-fns/startOfWeek';
 import getDay from 'date-fns/getDay';
 import enUS from 'date-fns/locale/en-US';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { Box, Paper, Typography, CircularProgress, Button, Dialog, DialogTitle, DialogContent, TextField, DialogActions, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
-import { Add as AddIcon } from '@mui/icons-material';
+import { 
+    Plus, 
+    Calendar as CalendarIcon,
+    Loader2
+} from 'lucide-react';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
-import { useSnackbar } from 'notistack';
+import { useToast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
+import { cn } from '@/lib/utils';
 
 const locales = {
   'en-US': enUS,
@@ -25,8 +48,8 @@ const localizer = dateFnsLocalizer({
 });
 
 const Calendar = () => {
-    const { user } = useAuth();
-    const { enqueueSnackbar } = useSnackbar();
+    const { user, role } = useAuth();
+    const { toast } = useToast();
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [open, setOpen] = useState(false);
@@ -52,7 +75,11 @@ const Calendar = () => {
             setEvents(mappedEvents);
         } catch (error) {
             console.error("Failed to fetch events");
-            enqueueSnackbar("Failed to fetch events", { variant: 'error' });
+            toast({
+                title: "Error",
+                description: "Failed to fetch calendar events",
+                variant: "destructive",
+            });
         } finally {
             setLoading(false);
         }
@@ -79,122 +106,161 @@ const Calendar = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
+    const handleSelectChange = (value) => {
+        setFormData({ ...formData, type: value });
+    };
+
     const handleSubmit = async () => {
         try {
             if (!formData.title || !formData.start_date || !formData.end_date) {
-                enqueueSnackbar("Please fill required fields", { variant: 'warning' });
+                toast({
+                    title: "Missing fields",
+                    description: "Please fill in all required fields",
+                    variant: "destructive",
+                });
                 return;
             }
 
             await api.post('/events/', formData);
-            enqueueSnackbar("Event added successfully", { variant: 'success' });
+            toast({
+                title: "Success",
+                description: "Event added to calendar",
+            });
             fetchEvents();
             handleClose();
         } catch (error) {
-            enqueueSnackbar(error.response?.data?.detail || "Failed to add event", { variant: 'error' });
+            toast({
+                title: "Error",
+                description: error.response?.data?.detail || "Failed to add event",
+                variant: "destructive",
+            });
         }
     };
 
     const eventStyleGetter = (event) => {
-        let backgroundColor = '#3174ad';
-        if (event.type === 'holiday') backgroundColor = '#e57373';
-        if (event.type === 'exam') backgroundColor = '#ffb74d';
+        let backgroundColor = '#2563eb'; // blue-600
+        if (event.type === 'holiday') backgroundColor = '#ef4444'; // red-500
+        if (event.type === 'exam') backgroundColor = '#f59e0b'; // amber-500
         return {
             style: {
-                backgroundColor
+                backgroundColor,
+                borderRadius: '6px',
+                border: 'none',
+                padding: '2px 6px'
             }
         };
     };
 
-    // Assume admin role is 'admin' or 'superuser'
-    const isAdmin = user?.role === 'admin' || user?.is_superuser === true;
+    const isAdmin = role === 'admin';
 
-    if (loading) return <CircularProgress />;
+    if (loading) return (
+        <div className="flex flex-col items-center justify-center h-[80vh] space-y-4">
+            <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
+            <p className="text-muted-foreground font-medium">Loading calendar...</p>
+        </div>
+    );
 
     return (
-        <Box sx={{ height: '80vh' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="h4" fontWeight="bold">Academic Calendar</Typography>
+        <div className="h-full space-y-4">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h2 className="text-3xl font-bold tracking-tight">Academic Calendar</h2>
+                    <p className="text-muted-foreground">Keep track of school events, holidays, and exams.</p>
+                </div>
                 {isAdmin && (
-                    <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpen}>
+                    <Button onClick={handleOpen}>
+                        <Plus size={18} className="mr-2" />
                         Add Event
                     </Button>
                 )}
-            </Box>
-            <Paper sx={{ height: '100%', p: 2 }}>
-                <BigCalendar
-                    localizer={localizer}
-                    events={events}
-                    startAccessor="start"
-                    endAccessor="end"
-                    style={{ height: '100%' }}
-                    eventPropGetter={eventStyleGetter}
-                    onSelectEvent={(event) => alert(`${event.title}\n${event.desc || ''}`)}
-                />
-            </Paper>
+            </div>
 
-            <Dialog open={open} onClose={handleClose}>
-                <DialogTitle>Add New Event</DialogTitle>
-                <DialogContent>
-                    <TextField
-                        autoFocus
-                        margin="dense"
-                        name="title"
-                        label="Event Title"
-                        fullWidth
-                        value={formData.title}
-                        onChange={handleChange}
+            <Card className="glass h-[calc(100vh-250px)] min-h-[500px] border-none shadow-sm overflow-hidden">
+                <CardContent className="p-4 h-full">
+                    <BigCalendar
+                        localizer={localizer}
+                        events={events}
+                        startAccessor="start"
+                        endAccessor="end"
+                        style={{ height: '100%' }}
+                        eventPropGetter={eventStyleGetter}
+                        onSelectEvent={(event) => alert(`${event.title}\n${event.desc || ''}`)}
+                        className="rounded-lg overflow-hidden"
                     />
-                    <TextField
-                        margin="dense"
-                        name="description"
-                        label="Description"
-                        fullWidth
-                        multiline
-                        rows={2}
-                        value={formData.description}
-                        onChange={handleChange}
-                    />
-                    <TextField
-                        margin="dense"
-                        name="start_date"
-                        label="Start Date & Time"
-                        type="datetime-local"
-                        fullWidth
-                        InputLabelProps={{ shrink: true }}
-                        value={formData.start_date}
-                        onChange={handleChange}
-                    />
-                    <TextField
-                        margin="dense"
-                        name="end_date"
-                        label="End Date & Time"
-                        type="datetime-local"
-                        fullWidth
-                        InputLabelProps={{ shrink: true }}
-                        value={formData.end_date}
-                        onChange={handleChange}
-                    />
-                    <FormControl fullWidth margin="dense">
-                        <InputLabel>Type</InputLabel>
-                        <Select
-                            name="type"
-                            value={formData.type}
-                            label="Type"
-                            onChange={handleChange}
-                        >
-                            <MenuItem value="event">Event</MenuItem>
-                            <MenuItem value="holiday">Holiday</MenuItem>
-                            <MenuItem value="exam">Exam</MenuItem>
-                        </Select>
-                    </FormControl>
+                </CardContent>
+            </Card>
+
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Add New Event</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="title">Event Title</Label>
+                            <Input
+                                id="title"
+                                name="title"
+                                value={formData.title}
+                                onChange={handleChange}
+                                placeholder="e.g. Science Fair"
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="description">Description</Label>
+                            <Textarea
+                                id="description"
+                                name="description"
+                                value={formData.description}
+                                onChange={handleChange}
+                                placeholder="Describe the event..."
+                                rows={3}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="start_date">Start Date & Time</Label>
+                            <Input
+                                id="start_date"
+                                name="start_date"
+                                type="datetime-local"
+                                value={formData.start_date}
+                                onChange={handleChange}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="end_date">End Date & Time</Label>
+                            <Input
+                                id="end_date"
+                                name="end_date"
+                                type="datetime-local"
+                                value={formData.end_date}
+                                onChange={handleChange}
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="type">Event Type</Label>
+                            <Select 
+                                value={formData.type} 
+                                onValueChange={handleSelectChange}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select Type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="event">Standard Event</SelectItem>
+                                    <SelectItem value="holiday">Holiday</SelectItem>
+                                    <SelectItem value="exam">Examination</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={handleClose}>Cancel</Button>
+                        <Button onClick={handleSubmit}>Add to Calendar</Button>
+                    </DialogFooter>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleClose}>Cancel</Button>
-                    <Button onClick={handleSubmit} variant="contained">Add</Button>
-                </DialogActions>
             </Dialog>
-        </Box>
+        </div>
     );
 };
 
