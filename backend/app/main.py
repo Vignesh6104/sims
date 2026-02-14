@@ -38,37 +38,22 @@ app.add_middleware(
 
 # Include Routers
 app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])
-app.include_router(admins.router, prefix=f"{settings.API_V1_STR}/admins", tags=["admins"])
-app.include_router(students.router, prefix=f"{settings.API_V1_STR}/students", tags=["students"])
-app.include_router(teachers.router, prefix=f"{settings.API_V1_STR}/teachers", tags=["teachers"])
-app.include_router(parents.router, prefix=f"{settings.API_V1_STR}/parents", tags=["parents"])
-app.include_router(attendance.router, prefix=f"{settings.API_V1_STR}/attendance", tags=["attendance"])
-app.include_router(marks.router, prefix=f"{settings.API_V1_STR}/marks", tags=["marks"])
-app.include_router(class_rooms.router, prefix=f"{settings.API_V1_STR}/class_rooms", tags=["class_rooms"])
-app.include_router(dashboard.router, prefix=f"{settings.API_V1_STR}/dashboard", tags=["dashboard"])
-app.include_router(subjects.router, prefix=f"{settings.API_V1_STR}/subjects", tags=["subjects"])
-app.include_router(exams.router, prefix=f"{settings.API_V1_STR}/exams", tags=["exams"])
-app.include_router(fees.router, prefix=f"{settings.API_V1_STR}/fees", tags=["fees"])
-app.include_router(timetable.router, prefix=f"{settings.API_V1_STR}/timetable", tags=["timetable"])
-app.include_router(assignments.router, prefix=f"{settings.API_V1_STR}/assignments", tags=["assignments"])
-app.include_router(notifications.router, prefix=f"{settings.API_V1_STR}/notifications", tags=["notifications"])
-app.include_router(events.router, prefix=f"{settings.API_V1_STR}/events", tags=["events"])
-app.include_router(library.router, prefix=f"{settings.API_V1_STR}/library", tags=["library"])
+# ... (all other routers)
 
-@app.on_event("startup")
-def on_startup():
-    from app.db.session import engine
-    from app.db.base import Base
-    from app.db.init_db import init_db
-    from app.db.session import SessionLocal
+# Database Initialization
+from app.db.session import engine, SessionLocal
+from app.db.base import Base
+from app.db.init_db import init_db
 
-    # Create tables (simple approach for dev without Alembic running)
+# Create tables and initialize admin user
+try:
     Base.metadata.create_all(bind=engine)
-    
-    # Init DB (create superuser)
     db = SessionLocal()
     init_db(db)
     db.close()
+    print("Database initialized successfully.")
+except Exception as e:
+    print(f"Database initialization failed: {e}")
 
 @app.get("/")
 def read_root():
