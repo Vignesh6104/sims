@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 import os
 import cloudinary
 from app.core.config import settings
-from app.api.v1 import admins, auth, students, teachers, attendance, marks, class_rooms, dashboard, subjects, exams, fees, timetable, assignments, notifications, events, library, parents
+from app.api.v1 import admins, auth, students, teachers, attendance, marks, class_rooms, dashboard, subjects, exams, fees, timetable, assignments, notifications, events, library, parents, leaves, feedbacks, quizzes, salaries, assets
 
 app = FastAPI(title=settings.PROJECT_NAME, openapi_url=f"{settings.API_V1_STR}/openapi.json")
 
@@ -55,6 +55,11 @@ app.include_router(assignments.router, prefix=f"{settings.API_V1_STR}/assignment
 app.include_router(notifications.router, prefix=f"{settings.API_V1_STR}/notifications", tags=["notifications"])
 app.include_router(events.router, prefix=f"{settings.API_V1_STR}/events", tags=["events"])
 app.include_router(library.router, prefix=f"{settings.API_V1_STR}/library", tags=["library"])
+app.include_router(leaves.router, prefix=f"{settings.API_V1_STR}/leaves", tags=["leaves"])
+app.include_router(feedbacks.router, prefix=f"{settings.API_V1_STR}/feedbacks", tags=["feedbacks"])
+app.include_router(quizzes.router, prefix=f"{settings.API_V1_STR}/quizzes", tags=["quizzes"])
+app.include_router(salaries.router, prefix=f"{settings.API_V1_STR}/salaries", tags=["salaries"])
+app.include_router(assets.router, prefix=f"{settings.API_V1_STR}/assets", tags=["assets"])
 
 # Database Initialization
 from app.db.session import engine, SessionLocal

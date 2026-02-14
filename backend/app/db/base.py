@@ -16,3 +16,8 @@ from app.models.notification import Notification
 from app.models.event import Event
 from app.models.library import Book, BorrowRecord
 from app.models.parent import Parent
+from app.models.leave import Leave
+from app.models.feedback import Feedback
+from app.models.quiz import Quiz, QuizResult
+from app.models.salary import Salary, PayrollRecord
+from app.models.asset import Asset

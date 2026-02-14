@@ -19,6 +19,20 @@ A comprehensive, full-stack application designed to streamline school operations
 - **Communication & Events:** 
     - Global notification and announcement system.
     - Integrated school calendar for events and holidays.
+    - **Leave Management:** 
+        - Application system for Students and Teachers.
+        - Approval workflow for Admins.
+    - **Feedback & Grievance:**
+        - Priority-based submission system for all users.
+        - Admin resolution and status tracking.
+    - **Online Quizzes:**
+        - Digital assessment platform with automated scoring.
+        - Class-specific quiz publishing.
+    - **HR & Payroll:**
+        - Teacher salary structure management.
+        - Monthly payroll record tracking.
+    - **Asset Management:**
+        - School inventory and equipment tracking system.
 - **Data Visualization:** Interactive dashboards with charts for attendance, marks, and financial trends.
 - **Security:** 
     - JWT authentication with **Refresh Token** mechanism for seamless UX.

@@ -31,6 +31,11 @@ import Library from './pages/admin/Library';
 import LibraryCatalog from './pages/LibraryCatalog';
 import ParentDashboard from './pages/ParentDashboard';
 import Profile from './pages/Profile';
+import Leaves from './pages/Leaves';
+import Feedbacks from './pages/Feedbacks';
+import Quizzes from './pages/Quizzes';
+import Salaries from './pages/admin/Salaries';
+import Assets from './pages/admin/Assets';
 
 // Placeholders for now, will implement later
 const Placeholder = ({ title }) => <h2>{title} Page (Coming Soon)</h2>;
@@ -63,6 +68,10 @@ function App() {
           <Route path="notifications" element={<Notifications />} />
           <Route path="calendar" element={<Calendar />} />
           <Route path="library" element={<Library />} />
+          <Route path="leaves" element={<Leaves />} />
+          <Route path="feedbacks" element={<Feedbacks />} />
+          <Route path="salaries" element={<Salaries />} />
+          <Route path="assets" element={<Assets />} />
           <Route path="profile" element={<Profile />} />
         </Route>
       </Route>
@@ -74,6 +83,10 @@ function App() {
           <Route path="attendance" element={<TeacherAttendance />} />
           <Route path="marks" element={<TeacherMarks />} />
           <Route path="assignments" element={<TeacherAssignments />} />
+          <Route path="quizzes" element={<Quizzes />} />
+          <Route path="leaves" element={<Leaves />} />
+          <Route path="feedbacks" element={<Feedbacks />} />
+          <Route path="assets" element={<Assets />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="calendar" element={<Calendar />} />
           <Route path="library" element={<LibraryCatalog />} />
@@ -88,6 +101,9 @@ function App() {
           <Route path="attendance" element={<StudentAttendance />} />
           <Route path="marks" element={<StudentMarks />} />
           <Route path="assignments" element={<StudentAssignments />} />
+          <Route path="quizzes" element={<Quizzes />} />
+          <Route path="leaves" element={<Leaves />} />
+          <Route path="feedbacks" element={<Feedbacks />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="calendar" element={<Calendar />} />
           <Route path="library" element={<LibraryCatalog />} />
@@ -99,6 +115,7 @@ function App() {
       <Route element={<ProtectedRoute allowedRoles={['parent']} />}>
         <Route path="/parent" element={<Layout />}>
           <Route index element={<ParentDashboard />} />
+          <Route path="feedbacks" element={<Feedbacks />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="calendar" element={<Calendar />} />
           <Route path="profile" element={<Profile />} />

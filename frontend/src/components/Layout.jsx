@@ -18,7 +18,12 @@ import {
     LogOut,
     User,
     ChevronRight,
-    Search
+    Search,
+    MessageSquare,
+    ClipboardCheck,
+    Banknote,
+    Package,
+    History
 } from 'lucide-react';
 import {
     Avatar,
@@ -74,6 +79,10 @@ const Layout = () => {
             { text: 'Calendar', icon: <CalendarDays size={20} />, path: '/admin/calendar' },
             { text: 'Library', icon: <Library size={20} />, path: '/admin/library' },
             { text: 'Fees', icon: <BarChart3 size={20} />, path: '/admin/fees' },
+            { text: 'Leaves', icon: <History size={20} />, path: '/admin/leaves' },
+            { text: 'Feedbacks', icon: <MessageSquare size={20} />, path: '/admin/feedbacks' },
+            { text: 'Salaries', icon: <Banknote size={20} />, path: '/admin/salaries' },
+            { text: 'Assets', icon: <Package size={20} />, path: '/admin/assets' },
             { text: 'Notifications', icon: <Bell size={20} />, path: '/admin/notifications' },
             { text: 'Profile', icon: <User size={20} />, path: '/admin/profile' },
         ],
@@ -82,6 +91,10 @@ const Layout = () => {
             { text: 'Attendance', icon: <ClipboardList size={20} />, path: '/teacher/attendance' },
             { text: 'Marks', icon: <BarChart3 size={20} />, path: '/teacher/marks' },
             { text: 'Assignments', icon: <ClipboardList size={20} />, path: '/teacher/assignments' },
+            { text: 'Quizzes', icon: <ClipboardCheck size={20} />, path: '/teacher/quizzes' },
+            { text: 'Leaves', icon: <History size={20} />, path: '/teacher/leaves' },
+            { text: 'Feedbacks', icon: <MessageSquare size={20} />, path: '/teacher/feedbacks' },
+            { text: 'Assets', icon: <Package size={20} />, path: '/teacher/assets' },
             { text: 'Calendar', icon: <CalendarDays size={20} />, path: '/teacher/calendar' },
             { text: 'Library', icon: <Library size={20} />, path: '/teacher/library' },
             { text: 'Notifications', icon: <Bell size={20} />, path: '/teacher/notifications' },
@@ -92,6 +105,9 @@ const Layout = () => {
             { text: 'Attendance', icon: <ClipboardList size={20} />, path: '/student/attendance' },
             { text: 'Marks', icon: <BarChart3 size={20} />, path: '/student/marks' },
             { text: 'Assignments', icon: <ClipboardList size={20} />, path: '/student/assignments' },
+            { text: 'Quizzes', icon: <ClipboardCheck size={20} />, path: '/student/quizzes' },
+            { text: 'Leaves', icon: <History size={20} />, path: '/student/leaves' },
+            { text: 'Feedbacks', icon: <MessageSquare size={20} />, path: '/student/feedbacks' },
             { text: 'Calendar', icon: <CalendarDays size={20} />, path: '/student/calendar' },
             { text: 'Library', icon: <Library size={20} />, path: '/student/library' },
             { text: 'Notifications', icon: <Bell size={20} />, path: '/student/notifications' },
@@ -99,6 +115,7 @@ const Layout = () => {
         ],
         parent: [
             { text: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/parent' },
+            { text: 'Feedbacks', icon: <MessageSquare size={20} />, path: '/parent/feedbacks' },
             { text: 'Calendar', icon: <CalendarDays size={20} />, path: '/parent/calendar' },
             { text: 'Notifications', icon: <Bell size={20} />, path: '/parent/notifications' },
             { text: 'Profile', icon: <User size={20} />, path: '/parent/profile' },
