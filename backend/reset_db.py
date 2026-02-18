@@ -1,3 +1,32 @@
+"""
+Database Reset Utility
+
+This module provides functionality to completely reset the SIMS database by dropping
+all tables, custom ENUM types, and the Alembic version tracking table. This is a
+destructive operation intended for development and testing purposes only.
+
+WARNING: This script will delete ALL data in the database. Use with extreme caution.
+         Never run this in a production environment.
+
+The reset process:
+1. Drops all application tables using CASCADE to handle foreign key constraints
+2. Removes custom PostgreSQL ENUM types (e.g., attendancestatus)
+3. Drops the alembic_version table to allow fresh migrations
+4. Handles errors gracefully for each operation
+
+After running this script, you must:
+1. Re-apply migrations: alembic upgrade head
+2. Re-initialize data: python run_init.py
+
+Usage:
+    python reset_db.py
+
+Prerequisites:
+    - Database connection must be configured in .env
+    - User must have DROP TABLE privileges
+    - Confirm you have a backup if this is not a disposable development database
+"""
+
 import sys
 import os
 from sqlalchemy import create_engine, text
@@ -8,6 +37,26 @@ sys.path.append(os.getcwd())
 from app.core.config import settings
 
 def reset_database():
+    """
+    Drop all database tables and ENUM types for a clean slate.
+    
+    Executes a series of DROP TABLE CASCADE statements to remove all application
+    tables, followed by custom type cleanup. Each operation is attempted
+    individually with error handling to ensure partial completion is possible.
+    
+    Tables Dropped:
+        - All user tables (admins, teachers, students, parents)
+        - Academic tables (marks, attendance, exams, subjects, classrooms)
+        - Supporting tables (assignments, submissions, notifications, events, etc.)
+        - System tables (alembic_version)
+    
+    ENUM Types Dropped:
+        - attendancestatus and other custom enums
+    
+    Warning:
+        This is a destructive operation. All data will be permanently lost.
+        There is no undo functionality.
+    """
     print(f"Connecting to: {settings.SQLALCHEMY_DATABASE_URI}")
     engine = create_engine(settings.SQLALCHEMY_DATABASE_URI)
     
