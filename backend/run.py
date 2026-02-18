@@ -1,3 +1,26 @@
+"""
+Application Entry Point
+
+This module serves as the main entry point for the SIMS (School Information Management System)
+FastAPI backend application. It configures and starts the Uvicorn ASGI server with environment-based
+settings for host, port, and hot-reload functionality.
+
+Environment Variables:
+    HOST (str): Server bind address (default: "0.0.0.0" for all interfaces)
+    PORT (int): Server port number (default: 8000)
+    RELOAD (str): Enable auto-reload on code changes (default: "false")
+
+Usage:
+    python run.py
+
+Example:
+    # Development mode with auto-reload
+    RELOAD=true python run.py
+    
+    # Production mode on custom port
+    PORT=8080 python run.py
+"""
+
 import uvicorn
 import os
 import sys
