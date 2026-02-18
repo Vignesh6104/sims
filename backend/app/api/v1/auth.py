@@ -1,3 +1,30 @@
+"""
+Authentication and User Management API Endpoints.
+
+This module provides comprehensive authentication and user profile management
+endpoints for the School Information Management System (SIMS). It handles:
+- OAuth2-based login/logout with JWT tokens
+- Token refresh mechanism
+- Password reset functionality
+- User registration (students and teachers)
+- Profile management (view/update profile and profile images)
+
+Authentication Method:
+    OAuth2 with Password Flow (Bearer tokens)
+    - Access tokens expire based on ACCESS_TOKEN_EXPIRE_MINUTES setting
+    - Refresh tokens are long-lived and can generate new access tokens
+
+Supported User Roles:
+    - Admin: System administrators with full access
+    - Teacher: Teaching staff with class management access
+    - Student: Enrolled students with limited access
+    - Parent: Parents/guardians with read access to children's data
+
+Security:
+    - Passwords are hashed using bcrypt
+    - JWT tokens signed with SECRET_KEY
+    - Profile images uploaded to Cloudinary
+"""
 from typing import Any, Union
 from datetime import timedelta
 import os
@@ -139,12 +166,35 @@ def login_access_token(
     db: Session = Depends(deps.get_db), form_data: OAuth2PasswordRequestForm = Depends()
 ) -> Any:
     """
-    OAuth2 compatible token login, get an access token for future requests.
-    Checks Admin, then Teacher, then Student, then Parent.
+    OAuth2 compatible token login for all user types.
+    
+    Authenticates a user and returns JWT access and refresh tokens.
+    Searches for the user across all role tables (Admin, Teacher, Student, Parent)
+    in sequence until a match is found.
+    
+    Request Body (Form Data):
+        username: User's email address
+        password: Plain text password (will be verified against hashed password)
+        
+    Returns:
+        Token: Contains access_token, refresh_token, and token_type
+        - access_token: Short-lived JWT for API authentication
+        - refresh_token: Long-lived JWT for obtaining new access tokens
+        - token_type: Always "bearer"
+        
+    Raises:
+        HTTPException 400: Invalid credentials or inactive user account
+        
+    Example:
+        POST /api/v1/auth/login
+        Content-Type: application/x-www-form-urlencoded
+        
+        username=teacher@school.com&password=secret123
     """
     email = form_data.username
     password = form_data.password
     
+    # Search for user across all role tables in priority order
     user = crud_admin.get_admin_by_email(db, email=email)
     role = "admin"
     
@@ -160,6 +210,7 @@ def login_access_token(
         user = crud_parent.get_parent_by_email(db, email=email)
         role = "parent"
 
+    # Validate credentials
     if not user or not security.verify_password(password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     elif not user.is_active:
@@ -182,9 +233,30 @@ def refresh_token(
     data: RefreshTokenRequest,
 ) -> Any:
     """
-    Refresh access token.
+    Refresh access token using a valid refresh token.
+    
+    Allows clients to obtain a new access token without re-authenticating
+    when the access token expires. The refresh token must be valid and
+    the associated user account must still be active.
+    
+    Request Body:
+        refresh_token (str): The refresh token obtained during login
+        
+    Returns:
+        Token: New access token and the same refresh token
+        
+    Raises:
+        HTTPException 400: Invalid token type, expired, or malformed token
+        HTTPException 404: User not found in database
+        HTTPException 400: User account is inactive
+        
+    Security Notes:
+        - Validates token type is "refresh" (not an access token)
+        - Verifies token signature and expiration
+        - Checks user still exists and is active
     """
     try:
+        # Decode and validate the refresh token
         payload = jwt.decode(
             data.refresh_token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
         )
@@ -194,6 +266,7 @@ def refresh_token(
     except (jwt.JWTError, ValidationError):
         raise HTTPException(status_code=400, detail="Invalid or expired refresh token")
     
+    # Retrieve user based on role in token
     user = None
     if token_data.role == "admin":
         user = db.query(Admin).filter(Admin.id == token_data.sub).first()
@@ -227,8 +300,27 @@ def forgot_password(
     data: ForgotPassword,
 ) -> Any:
     """
-    Simulate forgot password. Returns a reset token.
+    Initiate password reset process.
+    
+    Generates a short-lived reset token that can be used to reset the password.
+    In production, this token should be sent via email. For this implementation,
+    it's returned directly in the response.
+    
+    Request Body:
+        email (str): User's registered email address
+        
+    Returns:
+        dict: Message and reset token (15-minute expiration)
+        
+    Raises:
+        HTTPException 404: No user found with the provided email
+        
+    Security Notes:
+        - Token expires in 15 minutes
+        - Token contains user ID and role
+        - In production, send token via email instead of response
     """
+    # Search for user across all role tables
     user = crud_admin.get_admin_by_email(db, email=data.email)
     role = "admin"
     if not user:
@@ -244,6 +336,7 @@ def forgot_password(
     if not user:
         raise HTTPException(status_code=404, detail="User with this email does not exist")
     
+    # Generate short-lived reset token (15 minutes)
     reset_token = security.create_access_token(
         user.id, expires_delta=timedelta(minutes=15), role=role
     )
@@ -257,9 +350,29 @@ def reset_password(
     data: ResetPassword,
 ) -> Any:
     """
-    Reset password using token.
+    Reset user password using a valid reset token.
+    
+    Validates the reset token and updates the user's password.
+    The token must be obtained from the /forgot-password endpoint.
+    
+    Request Body:
+        token (str): Reset token from forgot-password endpoint
+        new_password (str): New password (will be hashed before storage)
+        
+    Returns:
+        dict: Success message
+        
+    Raises:
+        HTTPException 400: Invalid or expired token
+        HTTPException 404: User not found (may have been deleted)
+        
+    Security Notes:
+        - Password is hashed using bcrypt before storage
+        - Token is validated for signature and expiration
+        - Old password is immediately invalidated
     """
     try:
+        # Decode and validate reset token
         payload = jwt.decode(
             data.token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
         )
@@ -267,6 +380,7 @@ def reset_password(
     except (jwt.JWTError, ValidationError):
         raise HTTPException(status_code=400, detail="Invalid or expired token")
     
+    # Retrieve user based on role in token
     user = None
     if token_data.role == "admin":
         user = db.query(Admin).filter(Admin.id == token_data.sub).first()
@@ -280,6 +394,7 @@ def reset_password(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
+    # Update password with hashed version
     user.hashed_password = security.get_password_hash(data.new_password)
     db.add(user)
     db.commit()
@@ -292,7 +407,30 @@ def register_student(
     student_in: StudentCreate,
 ) -> Any:
     """
-    Register a new student.
+    Register a new student account (public endpoint).
+    
+    Allows self-registration of student accounts. Validates that the
+    email is not already registered before creating the account.
+    
+    Request Body:
+        StudentCreate schema containing:
+        - email (str): Unique email address
+        - password (str): Plain text password (will be hashed)
+        - full_name (str): Student's full name
+        - roll_number (str, optional): Student roll/ID number
+        - date_of_birth (date, optional): Date of birth
+        - address (str, optional): Residential address
+        - class_id (str, optional): Initial class assignment
+        
+    Returns:
+        Student: The newly created student object
+        
+    Raises:
+        HTTPException 400: Email already registered
+        
+    HTTP Status Codes:
+        200: Student successfully registered
+        400: Duplicate email
     """
     user = crud_student.get_student_by_email(db, email=student_in.email)
     if user:
@@ -306,7 +444,30 @@ def register_teacher(
     teacher_in: TeacherCreate,
 ) -> Any:
     """
-    Register a new teacher.
+    Register a new teacher account (public endpoint).
+    
+    Allows self-registration of teacher accounts. Validates that the
+    email is not already registered before creating the account.
+    
+    Request Body:
+        TeacherCreate schema containing:
+        - email (str): Unique email address
+        - password (str): Plain text password (will be hashed)
+        - full_name (str): Teacher's full name
+        - qualification (str, optional): Educational qualifications
+        - phone (str, optional): Contact number
+        - address (str, optional): Residential address
+        - subject_specialization (str, optional): Primary subject
+        
+    Returns:
+        Teacher: The newly created teacher object
+        
+    Raises:
+        HTTPException 400: Email already registered
+        
+    HTTP Status Codes:
+        200: Teacher successfully registered
+        400: Duplicate email
     """
     user = crud_teacher.get_teacher_by_email(db, email=teacher_in.email)
     if user:
