@@ -31,7 +31,7 @@ app.add_middleware(
         "http://localhost:5173",
         "http://localhost:3000",
     ],
-    allow_origin_regex="https://sims-.*\.vercel\.app",
+    allow_origin_regex=r"https://sims-.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
