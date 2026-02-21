@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { 
-    User, 
-    Mail, 
-    Lock, 
-    Camera, 
-    Loader2, 
-    Save, 
+import {
+    User,
+    Mail,
+    Lock,
+    Camera,
+    Loader2,
+    Save,
     CheckCircle2,
     Shield,
     Briefcase,
@@ -23,13 +23,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-    Dialog, 
-    DialogContent, 
-    DialogHeader, 
-    DialogTitle, 
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
     DialogDescription,
-    DialogFooter 
+    DialogFooter
 } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
 import Cropper from 'react-easy-crop';
@@ -37,19 +37,19 @@ import { getCroppedImgBlob } from '../utils/imageUtils';
 import { cn } from '@/lib/utils';
 
 const Profile = () => {
-    const { user, role, refreshProfile } = useAuth();
+    const { user, role, refreshProfile, registerWebAuthn } = useAuth();
     const { toast } = useToast();
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    
+
     // Cropping State
     const [imageSrc, setImageSrc] = useState(null);
     const [crop, setCrop] = useState({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
     const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
     const [openCrop, setOpenCrop] = useState(false);
-    
+
     // Form States
     const [infoForm, setInfoForm] = useState({
         full_name: '',
@@ -62,7 +62,7 @@ const Profile = () => {
         roll_number: '',
         address: ''
     });
-    
+
     const [passwordForm, setPasswordForm] = useState({
         current_password: '',
         new_password: '',
@@ -124,7 +124,7 @@ const Profile = () => {
             await api.put('/auth/me/profile-image', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            
+
             toast({ title: "Success", description: "Profile image updated" });
             await refreshProfile();
             fetchProfile();
@@ -165,7 +165,7 @@ const Profile = () => {
             toast({ title: "Error", description: "Passwords do not match", variant: "destructive" });
             return;
         }
-        
+
         setSaving(true);
         try {
             await api.put('/auth/me', { password: passwordForm.new_password });
@@ -220,7 +220,7 @@ const Profile = () => {
                             <p className="text-sm text-muted-foreground uppercase tracking-widest font-semibold mt-1">
                                 {role}
                             </p>
-                            
+
                             <div className="w-full mt-8 space-y-4">
                                 <div className="flex items-center gap-3 text-sm text-gray-600">
                                     <div className="p-2 bg-gray-50 rounded-lg"><Mail size={16} /></div>
@@ -262,31 +262,31 @@ const Profile = () => {
                                         <div className="grid gap-4 sm:grid-cols-2">
                                             <div className="space-y-2">
                                                 <Label htmlFor="name">Full Name</Label>
-                                                <Input 
-                                                    id="name" 
-                                                    value={infoForm.full_name} 
-                                                    onChange={(e) => setInfoForm({...infoForm, full_name: e.target.value})}
+                                                <Input
+                                                    id="name"
+                                                    value={infoForm.full_name}
+                                                    onChange={(e) => setInfoForm({ ...infoForm, full_name: e.target.value })}
                                                 />
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="email">Email Address</Label>
-                                                <Input 
-                                                    id="email" 
-                                                    type="email" 
-                                                    value={infoForm.email} 
-                                                    onChange={(e) => setInfoForm({...infoForm, email: e.target.value})}
+                                                <Input
+                                                    id="email"
+                                                    type="email"
+                                                    value={infoForm.email}
+                                                    onChange={(e) => setInfoForm({ ...infoForm, email: e.target.value })}
                                                 />
                                             </div>
-                                            
+
                                             {role === 'admin' && (
                                                 <>
                                                     <div className="space-y-2">
                                                         <Label>Department</Label>
-                                                        <Input value={infoForm.department} onChange={(e) => setInfoForm({...infoForm, department: e.target.value})} />
+                                                        <Input value={infoForm.department} onChange={(e) => setInfoForm({ ...infoForm, department: e.target.value })} />
                                                     </div>
                                                     <div className="space-y-2">
                                                         <Label>Position</Label>
-                                                        <Input value={infoForm.position} onChange={(e) => setInfoForm({...infoForm, position: e.target.value})} />
+                                                        <Input value={infoForm.position} onChange={(e) => setInfoForm({ ...infoForm, position: e.target.value })} />
                                                     </div>
                                                 </>
                                             )}
@@ -295,11 +295,11 @@ const Profile = () => {
                                                 <>
                                                     <div className="space-y-2">
                                                         <Label>Qualification</Label>
-                                                        <Input value={infoForm.qualification} onChange={(e) => setInfoForm({...infoForm, qualification: e.target.value})} />
+                                                        <Input value={infoForm.qualification} onChange={(e) => setInfoForm({ ...infoForm, qualification: e.target.value })} />
                                                     </div>
                                                     <div className="space-y-2">
                                                         <Label>Specialization</Label>
-                                                        <Input value={infoForm.subject_specialization} onChange={(e) => setInfoForm({...infoForm, subject_specialization: e.target.value})} />
+                                                        <Input value={infoForm.subject_specialization} onChange={(e) => setInfoForm({ ...infoForm, subject_specialization: e.target.value })} />
                                                     </div>
                                                 </>
                                             )}
@@ -312,7 +312,7 @@ const Profile = () => {
                                                     </div>
                                                     <div className="space-y-2">
                                                         <Label>Address</Label>
-                                                        <Input value={infoForm.address} onChange={(e) => setInfoForm({...infoForm, address: e.target.value})} />
+                                                        <Input value={infoForm.address} onChange={(e) => setInfoForm({ ...infoForm, address: e.target.value })} />
                                                     </div>
                                                 </>
                                             )}
@@ -340,20 +340,20 @@ const Profile = () => {
                                         <div className="space-y-4 max-w-md">
                                             <div className="space-y-2">
                                                 <Label htmlFor="new-password">New Password</Label>
-                                                <Input 
-                                                    id="new-password" 
-                                                    type="password" 
+                                                <Input
+                                                    id="new-password"
+                                                    type="password"
                                                     value={passwordForm.new_password}
-                                                    onChange={(e) => setPasswordForm({...passwordForm, new_password: e.target.value})}
+                                                    onChange={(e) => setPasswordForm({ ...passwordForm, new_password: e.target.value })}
                                                 />
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="confirm-password">Confirm New Password</Label>
-                                                <Input 
-                                                    id="confirm-password" 
-                                                    type="password" 
+                                                <Input
+                                                    id="confirm-password"
+                                                    type="password"
                                                     value={passwordForm.confirm_password}
-                                                    onChange={(e) => setPasswordForm({...passwordForm, confirm_password: e.target.value})}
+                                                    onChange={(e) => setPasswordForm({ ...passwordForm, confirm_password: e.target.value })}
                                                 />
                                             </div>
                                         </div>
@@ -365,6 +365,36 @@ const Profile = () => {
                                             </Button>
                                         </div>
                                     </form>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="border-none shadow-xl bg-white mt-6">
+                                <CardHeader>
+                                    <CardTitle>Passkey / Fingerprint</CardTitle>
+                                    <CardDescription>Register your device's biometric sensor for faster, secure logins.</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-1">
+                                            <p className="text-sm font-medium leading-none">Add a Passkey</p>
+                                            <p className="text-sm text-muted-foreground">
+                                                Use TouchID, FaceID, or Windows Hello.
+                                            </p>
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onClick={async () => {
+                                                setSaving(true);
+                                                await registerWebAuthn();
+                                                setSaving(false);
+                                            }}
+                                            disabled={saving}
+                                        >
+                                            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                            Register Passkey
+                                        </Button>
+                                    </div>
                                 </CardContent>
                             </Card>
                         </TabsContent>

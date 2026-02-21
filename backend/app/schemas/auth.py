@@ -19,3 +19,13 @@ class ResetPassword(BaseModel):
 
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
+
+class WebAuthnRegistrationVerifyRequest(BaseModel):
+    credential: dict
+
+class WebAuthnLoginOptionsRequest(BaseModel):
+    email: EmailStr
+
+class WebAuthnLoginVerifyRequest(BaseModel):
+    email: EmailStr
+    credential: dict

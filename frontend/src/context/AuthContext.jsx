@@ -4,6 +4,8 @@ import api from '../api/axios';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/components/ui/use-toast';
 
+import { startRegistration, startAuthentication } from '@simplewebauthn/browser';
+
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
@@ -31,17 +33,11 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
     }, [token]);
 
-    /**
-     * Re-fetches the full user profile from the server.
-     * Synchronizes the global Auth state with updated database values
-     * (e.g., after updating profile image or full name).
-     */
     const refreshProfile = async () => {
         if (profileLoading) return;
         setProfileLoading(true);
         try {
             const res = await api.get('/auth/me');
-            // Merge decoded token data with detailed DB profile
             setUser(prev => ({ ...prev, ...res.data }));
         } catch (error) {
             console.error("Failed to refresh profile", error);
@@ -63,22 +59,21 @@ export const AuthProvider = ({ children }) => {
             localStorage.setItem('token', access_token);
             localStorage.setItem('refresh_token', refresh_token);
             setToken(access_token);
-            
+
             const decoded = jwtDecode(access_token);
             setUser(decoded);
             setRole(decoded.role);
-            
+
             toast({
                 title: "Login Successful",
                 description: `Welcome back, ${decoded.full_name || email}!`,
             });
-            
-            // Navigate based on role
+
             if (decoded.role === 'admin') navigate('/admin');
             else if (decoded.role === 'teacher') navigate('/teacher');
             else if (decoded.role === 'student') navigate('/student');
             else if (decoded.role === 'parent') navigate('/parent');
-            
+
             return true;
         } catch (error) {
             console.error(error);
@@ -87,6 +82,52 @@ export const AuthProvider = ({ children }) => {
                 description: error.response?.data?.detail || 'Invalid credentials',
                 variant: "destructive",
             });
+            return false;
+        }
+    };
+
+    const registerWebAuthn = async () => {
+        try {
+            const optionsResp = await api.post('/auth/webauthn/register/generate');
+            const options = optionsResp.data;
+            const attResp = await startRegistration(options);
+            const verificationResp = await api.post('/auth/webauthn/register/verify', { credential: attResp });
+            toast({ title: 'Success', description: verificationResp.data.msg });
+            return true;
+        } catch (err) {
+            console.error(err);
+            toast({ title: 'Error', description: err.response?.data?.detail || 'Failed to register passkey', variant: 'destructive' });
+            return false;
+        }
+    };
+
+    const loginWebAuthn = async (email) => {
+        try {
+            const optionsResp = await api.post('/auth/webauthn/login/generate', { email });
+            const options = optionsResp.data;
+            const asseResp = await startAuthentication(options);
+            const verificationResp = await api.post('/auth/webauthn/login/verify', { email, credential: asseResp });
+
+            const { access_token, refresh_token } = verificationResp.data;
+            localStorage.setItem('token', access_token);
+            localStorage.setItem('refresh_token', refresh_token);
+            setToken(access_token);
+
+            const decoded = jwtDecode(access_token);
+            setUser(decoded);
+            setRole(decoded.role);
+
+            toast({ title: "Login Successful", description: `Welcome back via Passkey!` });
+
+            if (decoded.role === 'admin') navigate('/admin');
+            else if (decoded.role === 'teacher') navigate('/teacher');
+            else if (decoded.role === 'student') navigate('/student');
+            else if (decoded.role === 'parent') navigate('/parent');
+
+            return true;
+        } catch (err) {
+            console.error(err);
+            toast({ title: 'Login Failed', description: err.response?.data?.detail || 'Failed to authenticate with passkey', variant: 'destructive' });
             return false;
         }
     };
@@ -101,7 +142,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, role, token, login, logout, refreshProfile, loading }}>
+        <AuthContext.Provider value={{ user, role, token, login, loginWebAuthn, registerWebAuthn, logout, refreshProfile, loading }}>
             {children}
         </AuthContext.Provider>
     );

@@ -13,7 +13,23 @@ from app.api import deps
 from app.core import security
 from app.core.config import settings
 from app.crud import crud_student, crud_teacher, crud_admin, crud_parent
-from app.schemas.auth import Token, ForgotPassword, ResetPassword, TokenPayload, RefreshTokenRequest
+import json
+from webauthn import generate_registration_options, verify_registration_response, options_to_json
+from webauthn import generate_authentication_options, verify_authentication_response
+from webauthn.helpers.structs import RegistrationCredential, AuthenticationCredential
+from webauthn.helpers.parse_registration_credential_json import parse_registration_credential_json
+from webauthn.helpers.parse_authentication_credential_json import parse_authentication_credential_json
+
+from app.schemas.auth import (
+    Token, ForgotPassword, ResetPassword, TokenPayload, RefreshTokenRequest,
+    WebAuthnRegistrationVerifyRequest, WebAuthnLoginOptionsRequest, WebAuthnLoginVerifyRequest
+)
+from app.models.webauthn import WebAuthnCredential
+
+RP_ID = "localhost"
+RP_NAME = "School IMS"
+ORIGIN = "http://localhost:5173"
+webauthn_challenges = {}
 from app.schemas.student import Student as StudentSchema, StudentCreate
 from app.schemas.teacher import Teacher as TeacherSchema, TeacherCreate
 from app.models.admin import Admin
@@ -312,3 +328,158 @@ def register_teacher(
     if user:
         raise HTTPException(status_code=400, detail="Teacher with this email already exists")
     return crud_teacher.create_teacher(db, teacher=teacher_in)
+
+from webauthn.helpers.structs import PublicKeyCredentialDescriptor
+
+@router.post("/webauthn/register/generate")
+def webauthn_register_generate(
+    current_user: Any = Depends(deps.get_current_active_user),
+    db: Session = Depends(deps.get_db)
+) -> Any:
+    """Generate WebAuthn Registration Options for authenticated user"""
+    existing_creds = db.query(WebAuthnCredential).filter(WebAuthnCredential.user_id == current_user.id).all()
+    exclude_credentials = [
+        PublicKeyCredentialDescriptor(id=bytes.fromhex(cred.credential_id))
+        for cred in existing_creds
+    ] if existing_creds else None
+
+    options = generate_registration_options(
+        rp_id=RP_ID,
+        rp_name=RP_NAME,
+        user_id=current_user.id.encode("utf-8"),
+        user_name=current_user.email,
+        user_display_name=current_user.full_name,
+        exclude_credentials=exclude_credentials,
+    )
+    
+    webauthn_challenges[current_user.id] = options.challenge
+    return json.loads(options_to_json(options))
+
+@router.post("/webauthn/register/verify")
+def webauthn_register_verify(
+    request: WebAuthnRegistrationVerifyRequest,
+    current_user: Any = Depends(deps.get_current_active_user),
+    db: Session = Depends(deps.get_db)
+) -> Any:
+    """Verify WebAuthn Registration Response and store credential"""
+    expected_challenge = webauthn_challenges.pop(current_user.id, None)
+    if not expected_challenge:
+        raise HTTPException(status_code=400, detail="No active registration session found")
+
+    try:
+        credential = parse_registration_credential_json(request.credential)
+        verification = verify_registration_response(
+            credential=credential,
+            expected_challenge=expected_challenge,
+            expected_origin=ORIGIN,
+            expected_rp_id=RP_ID,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"WebAuthn registration failed: {str(e)}")
+
+    role = "student"
+    if isinstance(current_user, Admin): role = "admin"
+    elif isinstance(current_user, Teacher): role = "teacher"
+    elif isinstance(current_user, Parent): role = "parent"
+
+    new_cred = WebAuthnCredential(
+        user_id=current_user.id,
+        user_role=role,
+        credential_id=verification.credential_id.hex(),
+        public_key=verification.credential_public_key.hex(),
+        sign_count=verification.sign_count
+    )
+    db.add(new_cred)
+    db.commit()
+
+    return {"msg": "Passkey registered successfully!"}
+
+@router.post("/webauthn/login/generate")
+def webauthn_login_generate(
+    request: WebAuthnLoginOptionsRequest,
+    db: Session = Depends(deps.get_db)
+) -> Any:
+    """Generate WebAuthn Authentication Options for unauthenticated user"""
+    email = request.email
+    user = crud_admin.get_admin_by_email(db, email=email)
+    if not user: user = crud_teacher.get_teacher_by_email(db, email=email)
+    if not user: user = crud_student.get_student_by_email(db, email=email)
+    if not user: user = crud_parent.get_parent_by_email(db, email=email)
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    creds = db.query(WebAuthnCredential).filter(WebAuthnCredential.user_id == user.id).all()
+    allow_credentials = [
+        PublicKeyCredentialDescriptor(id=bytes.fromhex(cred.credential_id))
+        for cred in creds
+    ] if creds else []
+
+    options = generate_authentication_options(
+        rp_id=RP_ID,
+        allow_credentials=allow_credentials,
+    )
+    
+    webauthn_challenges[email] = options.challenge
+    return json.loads(options_to_json(options))
+
+@router.post("/webauthn/login/verify", response_model=Token)
+def webauthn_login_verify(
+    request: WebAuthnLoginVerifyRequest,
+    db: Session = Depends(deps.get_db)
+) -> Any:
+    """Verify WebAuthn Authentication Response and issue token"""
+    email = request.email
+    expected_challenge = webauthn_challenges.pop(email, None)
+    if not expected_challenge:
+        raise HTTPException(status_code=400, detail="No active authentication session found")
+
+    user = crud_admin.get_admin_by_email(db, email=email)
+    role = "admin"
+    if not user:
+        user = crud_teacher.get_teacher_by_email(db, email=email)
+        role = "teacher"
+    if not user:
+        user = crud_student.get_student_by_email(db, email=email)
+        role = "student"
+    if not user:
+        user = crud_parent.get_parent_by_email(db, email=email)
+        role = "parent"
+
+    if not user or not user.is_active:
+        raise HTTPException(status_code=404, detail="Inactive or non-existent user")
+
+    try:
+        credential = parse_authentication_credential_json(request.credential)
+        
+        cred_id_hex = getattr(credential, 'id', '')
+        if not cred_id_hex:
+            raise Exception("Invalid credential format in request")
+
+        db_cred = db.query(WebAuthnCredential).filter(WebAuthnCredential.credential_id == cred_id_hex).first()
+        if not db_cred:
+            raise Exception("Credential not found")
+        
+        verification = verify_authentication_response(
+            credential=credential,
+            expected_challenge=expected_challenge,
+            expected_origin=ORIGIN,
+            expected_rp_id=RP_ID,
+            credential_public_key=bytes.fromhex(db_cred.public_key),
+            credential_current_sign_count=db_cred.sign_count
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"WebAuthn authentication failed: {str(e)}")
+
+    db_cred.sign_count = verification.new_sign_count
+    db.commit()
+
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    
+    return {
+        "access_token": security.create_access_token(
+            user.id, expires_delta=access_token_expires, role=role, full_name=user.full_name
+        ),
+        "refresh_token": security.create_refresh_token(user.id, role=role),
+        "token_type": "bearer",
+    }
