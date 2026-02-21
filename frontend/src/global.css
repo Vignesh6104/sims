@@ -1,32 +1,63 @@
 @import "tailwindcss";
 
 @theme {
+  /* Core user palette overrides */
+  --color-white: #fffae5;
+  --color-black: #1b1821;
+
+  /* Gray scale: mapped to #1B1821 and #FFFAE5 */
+  --color-gray-50: #fdfbf5;
+  --color-gray-100: #fbf6ea;
+  --color-gray-200: #f4ead1;
+  --color-gray-300: #eadbb5;
+  --color-gray-400: #dcc693;
+  --color-gray-500: #cdac6e;
+  --color-gray-600: #a3824b;
+  --color-gray-700: #785b31;
+  --color-gray-800: #4a3a23;
+  --color-gray-900: #1b1821;
+  --color-gray-950: #0e0c11;
+
+  /* Blue scale: mapped to primary #935F4C and secondary #56382D */
+  --color-blue-50: #f5ece9;
+  --color-blue-100: #eaddd8;
+  --color-blue-200: #ceb9b1;
+  --color-blue-300: #b59489;
+  --color-blue-400: #9f7566;
+  --color-blue-500: #935f4c;
+  --color-blue-600: #7d4c3a;
+  --color-blue-700: #683d2d;
+  --color-blue-800: #56382d;
+  --color-blue-900: #462d25;
+  --color-blue-950: #1b1821;
+
+  /* Existing theme variables for Shadcn */
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
+  --color-background: var(--color-white);
+  --color-foreground: var(--color-gray-900);
 
-  --color-primary: hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary: var(--color-blue-600);
+  --color-primary-foreground: var(--color-white);
 
-  --color-secondary: hsl(var(--secondary));
-  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-secondary: var(--color-blue-800);
+  --color-secondary-foreground: var(--color-white);
 
   --color-destructive: hsl(var(--destructive));
   --color-destructive-foreground: hsl(var(--destructive-foreground));
 
-  --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-muted: var(--color-gray-100);
+  --color-muted-foreground: var(--color-gray-600);
 
-  --color-accent: hsl(var(--accent));
-  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-accent: var(--color-blue-100);
+  --color-accent-foreground: var(--color-blue-900);
 
-  --color-popover: hsl(var(--popover));
-  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-popover: var(--color-white);
+  --color-popover-foreground: var(--color-gray-900);
 
-  --color-card: hsl(var(--card));
-  --color-card-foreground: hsl(var(--card-foreground));
+  --color-card: var(--color-white);
+  --color-card-foreground: var(--color-gray-900);
 
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
@@ -36,12 +67,23 @@
   --animate-accordion-up: accordion-up 0.2s ease-out;
 
   @keyframes accordion-down {
-    from { height: 0; }
-    to { height: var(--radix-accordion-content-height); }
+    from {
+      height: 0;
+    }
+
+    to {
+      height: var(--radix-accordion-content-height);
+    }
   }
+
   @keyframes accordion-up {
-    from { height: var(--radix-accordion-content-height); }
-    to { height: 0; }
+    from {
+      height: var(--radix-accordion-content-height);
+    }
+
+    to {
+      height: 0;
+    }
   }
 }
 
@@ -113,6 +155,7 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -120,7 +163,7 @@
       sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    
+
     background: linear-gradient(to right top, var(--color-background, hsl(var(--background))), var(--color-muted, hsl(var(--muted))), var(--color-background, hsl(var(--background))));
     background-size: cover;
     min-height: 100vh;
