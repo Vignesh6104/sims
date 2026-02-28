@@ -26,9 +26,9 @@ from app.schemas.auth import (
 )
 from app.models.webauthn import WebAuthnCredential
 
-RP_ID = "localhost"
-RP_NAME = "School IMS"
-ORIGIN = "http://localhost:5173"
+RP_ID = settings.RP_ID
+RP_NAME = settings.RP_NAME
+ORIGIN = settings.RP_ORIGIN
 webauthn_challenges = {}
 from app.schemas.student import Student as StudentSchema, StudentCreate
 from app.schemas.teacher import Teacher as TeacherSchema, TeacherCreate
