@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { cn } from '@/lib/utils';
 import {
     LayoutDashboard,
@@ -24,7 +25,11 @@ import {
     ClipboardCheck,
     Banknote,
     Package,
-    History
+    History,
+    Palette,
+    Moon,
+    Sun,
+    Paintbrush
 } from 'lucide-react';
 import {
     Avatar,
@@ -54,6 +59,7 @@ const drawerWidth = 240;
 
 const Layout = () => {
     const { user, role, logout } = useAuth();
+    const { theme, setTheme, toggleTheme } = useTheme();
     const [mobileOpen, setMobileOpen] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
@@ -128,11 +134,11 @@ const Layout = () => {
     };
 
     const sidebarContent = (
-        <div className="flex flex-col h-full bg-white border-r">
-            <div className="p-6 text-center bg-gradient-to-br from-blue-600 to-blue-800 text-white m-2 rounded-2xl shadow-md">
-                <Avatar className="w-20 h-20 mx-auto mb-4 border-2 border-white/30 bg-white/20">
+        <div className="flex flex-col h-full bg-card border-r">
+            <div className="p-6 text-center bg-primary text-primary-foreground m-2 rounded-2xl shadow-md">
+                <Avatar className="w-20 h-20 mx-auto mb-4 border-2 border-primary-foreground/30 bg-primary-foreground/10">
                     <AvatarImage src={user?.profile_image} />
-                    <AvatarFallback className="text-2xl font-bold bg-transparent text-white">
+                    <AvatarFallback className="text-2xl font-bold bg-transparent text-primary-foreground">
                         {user?.full_name?.charAt(0).toUpperCase() || 'U'}
                     </AvatarFallback>
                 </Avatar>
@@ -149,13 +155,13 @@ const Layout = () => {
                                 className={cn(
                                     "flex items-center w-full px-4 py-2.5 rounded-xl transition-all duration-200 group",
                                     location.pathname === item.path
-                                        ? "bg-blue-50 text-blue-600"
-                                        : "text-gray-600 hover:bg-gray-100"
+                                        ? "bg-primary/10 text-primary"
+                                        : "text-muted-foreground hover:bg-muted"
                                 )}
                             >
                                 <span className={cn(
                                     "mr-3 transition-colors",
-                                    location.pathname === item.path ? "text-blue-600" : "text-gray-400 group-hover:text-gray-600"
+                                    location.pathname === item.path ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
                                 )}>
                                     {item.icon}
                                 </span>
@@ -172,7 +178,7 @@ const Layout = () => {
     );
 
     return (
-        <div className="flex min-h-screen bg-gray-50/50">
+        <div className="flex min-h-screen bg-background/50">
             {/* Desktop Sidebar */}
             <aside className="hidden sm:block w-[240px] fixed h-screen z-20">
                 {sidebarContent}
@@ -188,14 +194,14 @@ const Layout = () => {
 
             {/* Mobile Sidebar */}
             <aside className={cn(
-                "fixed top-0 left-0 h-screen w-[240px] z-40 bg-white transition-transform duration-300 sm:hidden",
+                "fixed top-0 left-0 h-screen w-[240px] z-40 bg-card transition-transform duration-300 sm:hidden",
                 mobileOpen ? "translate-x-0" : "-translate-x-full"
             )}>
                 {sidebarContent}
             </aside>
 
             <div className="flex-1 flex flex-col sm:pl-[240px]">
-                <header className="sticky top-0 z-10 bg-white/70 backdrop-blur-md border-b border-gray-200 px-4 sm:px-6 py-3 flex items-center justify-between">
+                <header className="sticky top-0 z-10 bg-background/70 backdrop-blur-md border-b border-border/50 px-4 sm:px-6 py-3 flex items-center justify-between">
                     <Button
                         variant="ghost"
                         size="icon"
@@ -214,8 +220,26 @@ const Layout = () => {
                                     <Button
                                         variant="ghost"
                                         size="icon"
+                                        onClick={toggleTheme}
+                                        className="text-foreground"
+                                    >
+                                        {theme === 'default' ? <Sun size={20} /> : theme === 'midnight' ? <Moon size={20} /> : <Palette size={20} />}
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Switch Theme</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
                                         onClick={() => navigate(`/${role}/notifications`)}
-                                        className="text-gray-600"
+                                        className="text-foreground"
                                     >
                                         <Bell size={20} />
                                     </Button>
@@ -229,7 +253,7 @@ const Layout = () => {
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0">
-                                    <Avatar className="h-9 w-9 border">
+                                    <Avatar className="h-9 w-9 border border-border">
                                         <AvatarImage src={user?.profile_image} />
                                         <AvatarFallback className="bg-secondary text-secondary-foreground">
                                             {user?.full_name?.charAt(0).toUpperCase() || 'U'}

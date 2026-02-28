@@ -187,54 +187,54 @@ const Profile = () => {
 
     if (loading) return (
         <div className="flex items-center justify-center h-[80vh]">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
     );
 
     return (
         <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
             <div className="flex flex-col space-y-2">
-                <h2 className="text-3xl font-bold tracking-tight">Profile Settings</h2>
+                <h2 className="text-3xl font-bold tracking-tight uppercase">Profile Settings</h2>
                 <p className="text-muted-foreground">Manage your account information and preferences.</p>
             </div>
 
             <div className="grid gap-8 md:grid-cols-12">
                 {/* Left Column: Avatar & Quick Info */}
                 <div className="md:col-span-4 space-y-6">
-                    <Card className="border-none shadow-xl overflow-hidden bg-white">
-                        <div className="h-32 bg-gradient-to-r from-blue-600 to-indigo-700" />
+                    <Card className="border-none shadow-xl overflow-hidden bg-card">
+                        <div className="h-32 bg-primary/80" />
                         <CardContent className="relative pt-0 flex flex-col items-center">
                             <div className="relative -mt-16 mb-4">
-                                <Avatar className="h-32 w-32 border-4 border-white shadow-2xl">
+                                <Avatar className="h-32 w-32 border-4 border-card shadow-2xl">
                                     <AvatarImage src={profile?.profile_image} />
-                                    <AvatarFallback className="text-3xl bg-blue-100 text-blue-700">
+                                    <AvatarFallback className="text-3xl bg-primary/10 text-primary">
                                         {profile?.full_name?.charAt(0) || 'U'}
                                     </AvatarFallback>
                                 </Avatar>
-                                <label className="absolute bottom-0 right-0 p-2 bg-blue-600 rounded-full text-white cursor-pointer hover:bg-blue-700 transition-colors shadow-lg">
+                                <label className="absolute bottom-0 right-0 p-2 bg-primary rounded-full text-primary-foreground cursor-pointer hover:bg-primary/90 transition-colors shadow-lg">
                                     <Camera size={18} />
                                     <input type="file" className="hidden" onChange={handleImageSelection} accept="image/*" />
                                 </label>
                             </div>
-                            <h3 className="text-xl font-bold">{profile?.full_name}</h3>
+                            <h3 className="text-xl font-bold text-foreground">{profile?.full_name}</h3>
                             <p className="text-sm text-muted-foreground uppercase tracking-widest font-semibold mt-1">
                                 {role}
                             </p>
 
                             <div className="w-full mt-8 space-y-4">
-                                <div className="flex items-center gap-3 text-sm text-gray-600">
-                                    <div className="p-2 bg-gray-50 rounded-lg"><Mail size={16} /></div>
+                                <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                                    <div className="p-2 bg-muted rounded-lg"><Mail size={16} className="text-primary" /></div>
                                     {profile?.email}
                                 </div>
                                 {profile?.department && (
-                                    <div className="flex items-center gap-3 text-sm text-gray-600">
-                                        <div className="p-2 bg-gray-50 rounded-lg"><Shield size={16} /></div>
+                                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                                        <div className="p-2 bg-muted rounded-lg"><Shield size={16} className="text-primary" /></div>
                                         {profile.department}
                                     </div>
                                 )}
                                 {profile?.roll_number && (
-                                    <div className="flex items-center gap-3 text-sm text-gray-600">
-                                        <div className="p-2 bg-gray-50 rounded-lg"><Hash size={16} /></div>
+                                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                                        <div className="p-2 bg-muted rounded-lg"><Hash size={16} className="text-primary" /></div>
                                         Roll No: {profile.roll_number}
                                     </div>
                                 )}
@@ -252,41 +252,43 @@ const Profile = () => {
                         </TabsList>
 
                         <TabsContent value="general" className="mt-0">
-                            <Card className="border-none shadow-xl bg-white">
+                            <Card className="border-none shadow-xl bg-card">
                                 <CardHeader>
-                                    <CardTitle>Personal Information</CardTitle>
+                                    <CardTitle className="text-foreground">Personal Information</CardTitle>
                                     <CardDescription>Update your basic profile details.</CardDescription>
                                 </CardHeader>
                                 <CardContent>
                                     <form onSubmit={handleInfoUpdate} className="space-y-6">
                                         <div className="grid gap-4 sm:grid-cols-2">
                                             <div className="space-y-2">
-                                                <Label htmlFor="name">Full Name</Label>
+                                                <Label htmlFor="name" className="text-foreground font-semibold">Full Name</Label>
                                                 <Input
                                                     id="name"
                                                     value={infoForm.full_name}
                                                     onChange={(e) => setInfoForm({ ...infoForm, full_name: e.target.value })}
+                                                    className="bg-background/50 border-border"
                                                 />
                                             </div>
                                             <div className="space-y-2">
-                                                <Label htmlFor="email">Email Address</Label>
+                                                <Label htmlFor="email" className="text-foreground font-semibold">Email Address</Label>
                                                 <Input
                                                     id="email"
                                                     type="email"
                                                     value={infoForm.email}
                                                     onChange={(e) => setInfoForm({ ...infoForm, email: e.target.value })}
+                                                    className="bg-background/50 border-border"
                                                 />
                                             </div>
 
                                             {role === 'admin' && (
                                                 <>
                                                     <div className="space-y-2">
-                                                        <Label>Department</Label>
-                                                        <Input value={infoForm.department} onChange={(e) => setInfoForm({ ...infoForm, department: e.target.value })} />
+                                                        <Label className="text-foreground font-semibold">Department</Label>
+                                                        <Input value={infoForm.department} onChange={(e) => setInfoForm({ ...infoForm, department: e.target.value })} className="bg-background/50 border-border" />
                                                     </div>
                                                     <div className="space-y-2">
-                                                        <Label>Position</Label>
-                                                        <Input value={infoForm.position} onChange={(e) => setInfoForm({ ...infoForm, position: e.target.value })} />
+                                                        <Label className="text-foreground font-semibold">Position</Label>
+                                                        <Input value={infoForm.position} onChange={(e) => setInfoForm({ ...infoForm, position: e.target.value })} className="bg-background/50 border-border" />
                                                     </div>
                                                 </>
                                             )}
@@ -294,12 +296,12 @@ const Profile = () => {
                                             {role === 'teacher' && (
                                                 <>
                                                     <div className="space-y-2">
-                                                        <Label>Qualification</Label>
-                                                        <Input value={infoForm.qualification} onChange={(e) => setInfoForm({ ...infoForm, qualification: e.target.value })} />
+                                                        <Label className="text-foreground font-semibold">Qualification</Label>
+                                                        <Input value={infoForm.qualification} onChange={(e) => setInfoForm({ ...infoForm, qualification: e.target.value })} className="bg-background/50 border-border" />
                                                     </div>
                                                     <div className="space-y-2">
-                                                        <Label>Specialization</Label>
-                                                        <Input value={infoForm.subject_specialization} onChange={(e) => setInfoForm({ ...infoForm, subject_specialization: e.target.value })} />
+                                                        <Label className="text-foreground font-semibold">Specialization</Label>
+                                                        <Input value={infoForm.subject_specialization} onChange={(e) => setInfoForm({ ...infoForm, subject_specialization: e.target.value })} className="bg-background/50 border-border" />
                                                     </div>
                                                 </>
                                             )}
@@ -307,19 +309,19 @@ const Profile = () => {
                                             {role === 'student' && (
                                                 <>
                                                     <div className="space-y-2">
-                                                        <Label>Roll Number</Label>
-                                                        <Input value={infoForm.roll_number} readOnly className="bg-gray-50" />
+                                                        <Label className="text-foreground font-semibold">Roll Number</Label>
+                                                        <Input value={infoForm.roll_number} readOnly className="bg-muted border-border font-bold" />
                                                     </div>
                                                     <div className="space-y-2">
-                                                        <Label>Address</Label>
-                                                        <Input value={infoForm.address} onChange={(e) => setInfoForm({ ...infoForm, address: e.target.value })} />
+                                                        <Label className="text-foreground font-semibold">Address</Label>
+                                                        <Input value={infoForm.address} onChange={(e) => setInfoForm({ ...infoForm, address: e.target.value })} className="bg-background/50 border-border" />
                                                     </div>
                                                 </>
                                             )}
                                         </div>
 
-                                        <div className="pt-4 border-t flex justify-end">
-                                            <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={saving}>
+                                        <div className="pt-4 border-t border-border flex justify-end">
+                                            <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg h-11 px-8" disabled={saving}>
                                                 {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                                                 Save Changes
                                             </Button>
@@ -330,36 +332,38 @@ const Profile = () => {
                         </TabsContent>
 
                         <TabsContent value="security" className="mt-0">
-                            <Card className="border-none shadow-xl bg-white">
+                            <Card className="border-none shadow-xl bg-card">
                                 <CardHeader>
-                                    <CardTitle>Change Password</CardTitle>
+                                    <CardTitle className="text-foreground">Change Password</CardTitle>
                                     <CardDescription>Ensure your account is using a long, random password to stay secure.</CardDescription>
                                 </CardHeader>
                                 <CardContent>
                                     <form onSubmit={handlePasswordUpdate} className="space-y-6">
                                         <div className="space-y-4 max-w-md">
                                             <div className="space-y-2">
-                                                <Label htmlFor="new-password">New Password</Label>
+                                                <Label htmlFor="new-password text-foreground font-semibold">New Password</Label>
                                                 <Input
                                                     id="new-password"
                                                     type="password"
                                                     value={passwordForm.new_password}
                                                     onChange={(e) => setPasswordForm({ ...passwordForm, new_password: e.target.value })}
+                                                    className="bg-background/50 border-border"
                                                 />
                                             </div>
                                             <div className="space-y-2">
-                                                <Label htmlFor="confirm-password">Confirm New Password</Label>
+                                                <Label htmlFor="confirm-password text-foreground font-semibold">Confirm New Password</Label>
                                                 <Input
                                                     id="confirm-password"
                                                     type="password"
                                                     value={passwordForm.confirm_password}
                                                     onChange={(e) => setPasswordForm({ ...passwordForm, confirm_password: e.target.value })}
+                                                    className="bg-background/50 border-border"
                                                 />
                                             </div>
                                         </div>
 
-                                        <div className="pt-4 border-t flex justify-end">
-                                            <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={saving}>
+                                        <div className="pt-4 border-t border-border flex justify-end">
+                                            <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg h-11 px-8" disabled={saving}>
                                                 {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Lock className="mr-2 h-4 w-4" />}
                                                 Update Password
                                             </Button>
@@ -368,15 +372,15 @@ const Profile = () => {
                                 </CardContent>
                             </Card>
 
-                            <Card className="border-none shadow-xl bg-white mt-6">
+                            <Card className="border-none shadow-xl bg-card mt-6">
                                 <CardHeader>
-                                    <CardTitle>Passkey / Fingerprint</CardTitle>
+                                    <CardTitle className="text-foreground">Passkey / Fingerprint</CardTitle>
                                     <CardDescription>Register your device's biometric sensor for faster, secure logins.</CardDescription>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="flex items-center justify-between">
                                         <div className="space-y-1">
-                                            <p className="text-sm font-medium leading-none">Add a Passkey</p>
+                                            <p className="text-sm font-bold leading-none text-foreground">Add a Passkey</p>
                                             <p className="text-sm text-muted-foreground">
                                                 Use TouchID, FaceID, or Windows Hello.
                                             </p>
@@ -384,6 +388,7 @@ const Profile = () => {
                                         <Button
                                             type="button"
                                             variant="outline"
+                                            className="border-primary text-primary hover:bg-primary/10 font-bold"
                                             onClick={async () => {
                                                 setSaving(true);
                                                 await registerWebAuthn();
@@ -404,12 +409,12 @@ const Profile = () => {
 
             {/* Image Cropping Dialog */}
             <Dialog open={openCrop} onOpenChange={setOpenCrop}>
-                <DialogContent className="sm:max-w-[500px]">
+                <DialogContent className="sm:max-w-[500px] bg-card border-border">
                     <DialogHeader>
-                        <DialogTitle>Crop Profile Image</DialogTitle>
+                        <DialogTitle className="text-foreground">Crop Profile Image</DialogTitle>
                         <DialogDescription>Adjust your profile picture before uploading.</DialogDescription>
                     </DialogHeader>
-                    <div className="relative w-full h-80 bg-gray-100 rounded-lg overflow-hidden">
+                    <div className="relative w-full h-80 bg-muted rounded-lg overflow-hidden">
                         {imageSrc && (
                             <Cropper
                                 image={imageSrc}
@@ -423,7 +428,7 @@ const Profile = () => {
                         )}
                     </div>
                     <div className="py-4 space-y-2">
-                        <Label>Zoom</Label>
+                        <Label className="text-foreground font-semibold">Zoom</Label>
                         <Slider
                             value={[zoom]}
                             min={1}
@@ -433,8 +438,8 @@ const Profile = () => {
                         />
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setOpenCrop(false)}>Cancel</Button>
-                        <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleSaveCroppedImage} disabled={saving}>
+                        <Button variant="outline" className="border-border text-foreground hover:bg-muted" onClick={() => setOpenCrop(false)}>Cancel</Button>
+                        <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg" onClick={handleSaveCroppedImage} disabled={saving}>
                             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                             Apply & Save
                         </Button>
