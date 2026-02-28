@@ -452,10 +452,7 @@ def webauthn_login_verify(
     try:
         credential = parse_authentication_credential_json(request.credential)
         
-        cred_id_hex = getattr(credential, 'id', '')
-        if not cred_id_hex:
-            raise Exception("Invalid credential format in request")
-
+        cred_id_hex = credential.raw_id.hex()
         db_cred = db.query(WebAuthnCredential).filter(WebAuthnCredential.credential_id == cred_id_hex).first()
         if not db_cred:
             raise Exception("Credential not found")
