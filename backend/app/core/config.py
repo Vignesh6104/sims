@@ -22,9 +22,9 @@ class Settings(BaseSettings):
     CLOUDINARY_API_SECRET: str
 
     # WebAuthn Settings
-    RP_ID: str = "sims-pied-six.vercel.app"
-    RP_NAME: str = "School Information Management System"
-    RP_ORIGIN: str = "https://sims-pied-six.vercel.app"
+    RP_ID: str
+    RP_NAME: str
+    RP_ORIGIN: str
 
     class Config:
         case_sensitive = True
